@@ -20,6 +20,7 @@ interface ProjectionActions {
     getProjectionLength: (projectionIndex: number) => number;
     getBackground: (projectionIndex: number, contentIndex: number) => [string, number];
     getContents: (projectionIndex: number) => ProjectionMaster["contents"];
+    getIndexById: (id: string) => number;
 
     setProjections: (projections: Setter<ProjectionMaster[]>) => void;
     setProjectionsWithIds: (projections: Setter<ProjectionMasterWithId[]>) => void;
@@ -84,6 +85,8 @@ export const useProjectionStore = create<ProjectionStore>((set, get) => ({
     },
 
     getContents: (projectionIndex: number) => get().projections[projectionIndex]?.contents ?? [],
+
+    getIndexById: (id: string) => get().projections.findIndex((p) => p.id === id),
 
     setProjections: (projections) => {
         set((s) => {

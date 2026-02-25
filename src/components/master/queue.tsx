@@ -1,5 +1,5 @@
 import { IconDropdownButton, IconDropdownMenuItem } from "@/components/core/buttons";
-import { AddMasterQueue } from "@/components/master/add/dialog";
+import { AddMasterContent, AddMasterQueue } from "@/components/master/add/dialog";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGlobalKeyboard } from "@/context/GlobalKeyboardContext";
@@ -28,7 +28,11 @@ export function AddMasterButton() {
     const [dialogType, setDialogType] = useState<"queue" | "content">("queue");
 
     const dialogContent = useMemo(() => {
-        return dialogType === "queue" ? <AddMasterQueue setOpenDialog={setOpenDialog} /> : null;
+        return dialogType === "queue" ? (
+            <AddMasterQueue setOpenDialog={setOpenDialog} />
+        ) : (
+            <AddMasterContent setOpenDialog={setOpenDialog} />
+        );
     }, [dialogType]);
 
     const [register, unregister] = useGlobalKeyboard();
