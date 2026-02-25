@@ -24,7 +24,7 @@ interface ProjectionActions {
     setProjections: (projections: Setter<ProjectionMaster[]>) => void;
     setProjectionsWithIds: (projections: Setter<ProjectionMasterWithId[]>) => void;
 
-    addProjection: (projection: ProjectionMaster) => void;
+    addProjection: (projection: ProjectionMaster) => string;
     addContent: (projectionIndex: number, content: ProjectionMaster["contents"][number]) => void;
 }
 
@@ -110,14 +110,17 @@ export const useProjectionStore = create<ProjectionStore>((set, get) => ({
     },
 
     addProjection: (projection) => {
+        const id = uuidv4();
         set((s) => {
-            const p = [...s.projections, { ...projection, id: uuidv4() }];
+            const p = [...s.projections, { ...projection, id }];
             useTransitionStore.getState().syncWithProjections(p);
             return {
                 ...backgroundMiner(p),
                 projections: p,
             };
         });
+
+        return id;
     },
     addContent: (projectionIndex, content) => {
         set((s) => {

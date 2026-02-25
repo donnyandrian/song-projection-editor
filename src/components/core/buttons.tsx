@@ -126,10 +126,11 @@ export const IconDropdownMenuItem = memo(function IconDropdownMenuItem({
     text,
     textClassName,
     onClick,
+    onSelect,
     accelerator,
-}: IconButtonProps) {
+}: IconButtonProps & { onSelect?: () => void }) {
     return (
-        <DropdownMenuItem aria-label={label} onClick={onClick}>
+        <DropdownMenuItem aria-label={label} onClick={onClick} onSelect={onSelect}>
             <HugeiconsIcon
                 icon={icon}
                 strokeWidth={iconStrokeWidth ?? 2}

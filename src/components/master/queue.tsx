@@ -1,9 +1,11 @@
 import { IconDropdownButton, IconDropdownMenuItem } from "@/components/core/buttons";
+import { AddQueueContent } from "@/components/master/add/dialog";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGlobalKeyboard } from "@/context/GlobalKeyboardContext";
 import { useProjectionStore } from "@/stores/projection.store";
 import { Add01Icon, KeyframesDoubleIcon, Layers01Icon } from "@hugeicons-pro/core-stroke-rounded";
-import { useCallback, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export function MasterTabs() {
     const projections = useProjectionStore((s) => s.projections);
@@ -22,61 +24,60 @@ export function MasterTabs() {
 }
 
 export function AddMasterButton() {
-    const addQueue = useCallback(() => {
-        useProjectionStore.getState().addProjection({
-            title: "Sample Master",
-            bg: "./__temp/videos/essentials/background_ex_1080.webm",
-            transition: "fade",
-            contents: [
-                {
-                    type: "Text",
-                    content: "Text Content",
-                },
-            ],
-        });
-    }, []);
+    const [openDialog, setOpenDialog] = useState(false);
+    const [dialogType, setDialogType] = useState<"queue" | "content">("queue");
 
-    const addContent = useCallback(() => {
-        useProjectionStore.getState().addContent(0, {
-            type: "Text",
-            content: "Text Content",
-        });
-    }, []);
+    const dialogContent = useMemo(() => {
+        return dialogType === "queue" ? <AddQueueContent setOpenDialog={setOpenDialog} /> : null;
+    }, [dialogType]);
 
     const [register, unregister] = useGlobalKeyboard();
     useEffect(() => {
-        register("A", addContent);
-        register("Shift+A", addQueue);
+        register("A", () => {
+            setDialogType("content");
+            setOpenDialog(true);
+        });
+        register("Shift+A", () => {
+            setDialogType("queue");
+            setOpenDialog(true);
+        });
 
         return () => {
             unregister("A");
             unregister("Shift+A");
         };
-    }, [addQueue, addContent, register, unregister]);
+    }, [register, unregister]);
 
     return (
-        <IconDropdownButton label="Add Item" icon={Add01Icon} iconStrokeWidth={2.5}>
-            <IconDropdownMenuItem
-                label={"Add Queue"}
-                text="Queue"
-                icon={KeyframesDoubleIcon}
-                iconStrokeWidth={2}
-                onClick={addQueue}
-                accelerator={{
-                    key: "A",
-                    shift: true,
-                }}
-            />
-            <IconDropdownMenuItem
-                label={"Add Content"}
-                text="Content"
-                icon={Layers01Icon}
-                iconStrokeWidth={2}
-                onClick={addContent}
-                accelerator={{
-                    key: "A",
-                }}
-            />
-        </IconDropdownButton>
+        <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+            <IconDropdownButton label="Add Item" icon={Add01Icon} iconStrokeWidth={2.5}>
+                <DialogTrigger asChild>
+                    <IconDropdownMenuItem
+                        label={"Add Queue"}
+                        text="Queue"
+                        icon={KeyframesDoubleIcon}
+                        iconStrokeWidth={2}
+                        onSelect={() => setDialogType("queue")}
+                        accelerator={{
+                            key: "A",
+                            shift: true,
+                        }}
+                    />
+                </DialogTrigger>
+                <DialogTrigger asChild>
+                    <IconDropdownMenuItem
+                        label={"Add Content"}
+                        text="Content"
+                        icon={Layers01Icon}
+                        iconStrokeWidth={2}
+                        onSelect={() => setDialogType("content")}
+                        accelerator={{
+                            key: "A",
+                        }}
+                    />
+                </DialogTrigger>
+            </IconDropdownButton>
+            {dialogContent}
+        </Dialog>
     );
 }
