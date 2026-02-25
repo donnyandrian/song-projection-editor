@@ -24,7 +24,7 @@ import { useCallback } from "react";
 interface DialogProps {
     setOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
 }
-export function AddQueueContent({ setOpenDialog }: DialogProps) {
+export function AddMasterQueue({ setOpenDialog }: DialogProps) {
     const handleSubmit = useCallback(
         (ev: React.SubmitEvent<HTMLFormElement>) => {
             ev.preventDefault();
