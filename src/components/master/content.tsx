@@ -1,27 +1,19 @@
 import { Node, NodeContainer } from "@/components/node";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { TabsContent } from "@/components/ui/tabs";
-import { projectionToNode } from "@/lib/node";
-import { createItemName } from "@/lib/projection";
+import { pToMaster } from "@/lib/master";
 import { useProjectionStore } from "@/stores/projection.store";
+import type { NodeType } from "@/types/node";
 
 export function MasterContents() {
     const projections = useProjectionStore((s) => s.projections);
 
     return (
         <>
-            <MasterContent id="master-1">
-                <Node type="text" />
-                <Node type="image" />
-                <Node type="video" />
-            </MasterContent>
-            <MasterContent id="master-2">Master 2 content</MasterContent>
+            <MasterContent id="master-1" {...pToMaster(projections[0])} />
+            <MasterContent id="master-2" {...pToMaster(projections[0])} />
             {projections.map((p) => (
-                <MasterContent key={p.id} id={p.id}>
-                    {p.contents.map((c, i) => (
-                        <Node key={i} type={projectionToNode(c.type)} label={createItemName(c)} />
-                    ))}
-                </MasterContent>
+                <MasterContent key={p.id} id={p.id} {...pToMaster(p)} />
             ))}
         </>
     );
@@ -29,9 +21,14 @@ export function MasterContents() {
 
 interface MasterContentProps {
     id: string;
-    children?: React.ReactNode;
+    contents: {
+        type: NodeType;
+        label: string;
+    }[];
+    backgrounds: string[];
+    transitions: string[];
 }
-function MasterContent({ id, children }: MasterContentProps) {
+function MasterContent({ id, contents, backgrounds, transitions }: MasterContentProps) {
     return (
         <TabsContent value={id}>
             <ResizablePanelGroup
@@ -41,41 +38,45 @@ function MasterContent({ id, children }: MasterContentProps) {
                 <ResizablePanel
                     defaultSize="10rem"
                     minSize="5rem"
-                    className="Nodes-start flex max-w-none! flex-col gap-2 py-2"
+                    className="flex max-w-none! flex-col items-start gap-2 py-2"
                 >
                     <span className="text-muted-foreground sticky left-0 px-4 text-xs">
                         Content
                     </span>
-                    <NodeContainer>{children}</NodeContainer>
-                </ResizablePanel>
-                <ResizableHandle className="sticky left-0 h-px!" />
-                <ResizablePanel
-                    defaultSize="5rem"
-                    minSize="5rem"
-                    className="Nodes-start flex max-w-none! flex-col gap-2 py-2"
-                >
-                    <span className="text-muted-foreground sticky left-0 px-4 text-xs">
-                        Background
-                    </span>
                     <NodeContainer>
-                        <Node type="background" />
-                        <Node type="background" />
-                        <Node type="background" />
+                        {contents.map((c, i) => (
+                            <Node key={i} {...c} />
+                        ))}
                     </NodeContainer>
                 </ResizablePanel>
                 <ResizableHandle className="sticky left-0 h-px!" />
                 <ResizablePanel
                     defaultSize="5rem"
                     minSize="5rem"
-                    className="Nodes-start flex max-w-none! flex-col gap-2 py-2"
+                    className="flex max-w-none! flex-col items-start gap-2 py-2"
+                >
+                    <span className="text-muted-foreground sticky left-0 px-4 text-xs">
+                        Background
+                    </span>
+                    <NodeContainer>
+                        {backgrounds.map((bg, i) => (
+                            <Node key={i} type="background" label={bg} />
+                        ))}
+                    </NodeContainer>
+                </ResizablePanel>
+                <ResizableHandle className="sticky left-0 h-px!" />
+                <ResizablePanel
+                    defaultSize="5rem"
+                    minSize="5rem"
+                    className="flex max-w-none! flex-col items-start gap-2 py-2"
                 >
                     <span className="text-muted-foreground sticky left-0 px-4 text-xs">
                         Transition
                     </span>
                     <NodeContainer>
-                        <Node type="transition" />
-                        <Node type="transition" />
-                        <Node type="transition" />
+                        {transitions.map((t, i) => (
+                            <Node key={i} type="transition" label={t} />
+                        ))}
                     </NodeContainer>
                 </ResizablePanel>
             </ResizablePanelGroup>
