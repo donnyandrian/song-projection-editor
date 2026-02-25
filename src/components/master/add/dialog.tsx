@@ -52,13 +52,16 @@ export function AddMasterQueue({ setOpenDialog }: DialogProps) {
     return (
         <DialogContent
             showCloseButton={false}
-            className="overflow-hidden max-md:size-full max-md:max-w-full! md:max-h-[80dvh] md:max-w-[80dvw] lg:max-w-[90dvw]"
+            className="flex flex-col overflow-hidden max-md:size-full max-md:max-w-full! md:max-h-[80dvh] md:max-w-[80dvw] lg:max-w-[90dvw]"
         >
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <form
+                onSubmit={handleSubmit}
+                className="-mx-6 flex h-full flex-col gap-4 overflow-y-hidden *:px-6"
+            >
                 <DialogHeader>
                     <DialogTitle>Add Queue</DialogTitle>
                 </DialogHeader>
-                <FieldGroup className="flex-1">
+                <FieldGroup className="no-scrollbar -my-2 flex-1 overflow-y-auto py-2">
                     <Field>
                         <FieldLabel className="gap-0.5" htmlFor="queue-title">
                             Title <span className="text-destructive">*</span>
