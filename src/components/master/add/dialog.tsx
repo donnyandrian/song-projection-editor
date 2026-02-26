@@ -40,12 +40,7 @@ export function AddMasterQueue({ setOpenDialog }: DialogProps) {
                 title: data.get("title") as string,
                 bg: data.get("background") as string,
                 transition: data.get("transition") as ProjectionTransition,
-                contents: [
-                    {
-                        type: "Text",
-                        content: "Text Content",
-                    },
-                ],
+                contents: [],
             });
 
             useMasterStore.getState().setActiveTab(id);
@@ -176,6 +171,11 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
                 transition: (data.get("transition") as string).trim() || undefined,
             } as ContentT);
 
+            useMasterStore
+                .getState()
+                .setActiveContentIndex(
+                    useProjectionStore.getState().projections[index].contents.length - 1,
+                );
             setOpenDialog(false);
         },
         [setOpenDialog],

@@ -10,10 +10,10 @@ import { useEffect, useMemo, useState } from "react";
 export function MasterTabs() {
     const projections = useProjectionStore((s) => s.projections);
 
+    if (projections.length === 0) return null;
+
     return (
         <TabsList className="justify-start overflow-scroll *:px-6">
-            <TabsTrigger value="master-1">Master 1</TabsTrigger>
-            <TabsTrigger value="master-2">Master 2</TabsTrigger>
             {projections.map((p) => (
                 <TabsTrigger key={p.id} value={p.id}>
                     {p.title}
