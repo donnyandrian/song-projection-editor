@@ -43,9 +43,13 @@ export function AddMasterButton() {
         );
     }, [dialogType]);
 
+    const hasActiveQueue = useMasterStore((s) => s.activeProjectionIndex >= 0);
+
     const [register, unregister] = useGlobalKeyboard();
     useEffect(() => {
         register("A", () => {
+            if (useMasterStore.getState().activeProjectionIndex < 0) return;
+
             setDialogType("content");
             setOpenDialog(true);
         });
@@ -76,18 +80,20 @@ export function AddMasterButton() {
                         }}
                     />
                 </DialogTrigger>
-                <DialogTrigger asChild>
-                    <IconDropdownMenuItem
-                        label={"Add Content"}
-                        text="Content"
-                        icon={Layers01Icon}
-                        iconStrokeWidth={2}
-                        onSelect={() => setDialogType("content")}
-                        accelerator={{
-                            key: "A",
-                        }}
-                    />
-                </DialogTrigger>
+                {hasActiveQueue && (
+                    <DialogTrigger asChild>
+                        <IconDropdownMenuItem
+                            label={"Add Content"}
+                            text="Content"
+                            icon={Layers01Icon}
+                            iconStrokeWidth={2}
+                            onSelect={() => setDialogType("content")}
+                            accelerator={{
+                                key: "A",
+                            }}
+                        />
+                    </DialogTrigger>
+                )}
             </IconDropdownButton>
             {dialogContent}
         </Dialog>
@@ -114,6 +120,9 @@ export function DeleteMasterButton() {
     const [register, unregister] = useGlobalKeyboard();
     useEffect(() => {
         register("Delete", () => {
+            if ((useMasterStore.getState().getActiveProjection()?.contents?.length ?? 0) <= 0)
+                return;
+            
             setDialogType("content");
             setOpenDialog(true);
         });

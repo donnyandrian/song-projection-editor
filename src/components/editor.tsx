@@ -4,14 +4,13 @@ import { MasterContents } from "@/components/master/content";
 import { Button } from "@/components/ui/button";
 import { useMasterStore } from "@/stores/master.store";
 import { useShallow } from "zustand/react/shallow";
-import { useProjectionStore } from "@/stores/projection.store";
 
 export function Editor() {
     const [activeTab, setActiveTab] = useMasterStore(
         useShallow((s) => [s.activeTab, s.setActiveTab]),
     );
 
-    const hasTabs = useProjectionStore((s) => s.projections.length > 0);
+    const hasActiveTab = useMasterStore((s) => s.activeProjectionIndex >= 0);
 
     return (
         <>
@@ -20,7 +19,7 @@ export function Editor() {
                     <span className="text-muted-foreground text-sm">Queue</span>
                     <MasterTabs />
                     <AddMasterButton />
-                    {hasTabs && <DeleteMasterButton />}
+                    {hasActiveTab && <DeleteMasterButton />}
                 </div>
                 <MasterContents />
             </Tabs>
