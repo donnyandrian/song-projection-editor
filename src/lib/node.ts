@@ -11,16 +11,16 @@ import {
 export function typeNodeToColor(type: NodeType) {
     switch (type) {
         case "text":
-            return "bg-amber-200 text-amber-700 border-amber-700/50";
+            return "bg-amber-200 text-amber-700 border-amber-700/50 inset-ring-amber-700/50";
         case "image":
-            return "bg-green-200 text-green-700 border-green-700/50";
+            return "bg-green-200 text-green-700 border-green-700/50 inset-ring-green-700/50";
         case "video":
-            return "bg-cyan-200 text-cyan-700 border-cyan-700/50";
+            return "bg-cyan-200 text-cyan-700 border-cyan-700/50 inset-ring-cyan-700/50";
         case "transition":
-            return "bg-violet-200 text-violet-700 border-violet-700/50";
+            return "bg-violet-200 text-violet-700 border-violet-700/50 inset-ring-violet-700/50";
         case "background":
         default:
-            return "bg-slate-200 text-slate-700 border-slate-700/50";
+            return "bg-slate-200 text-slate-700 border-slate-700/50 inset-ring-slate-700/50";
     }
 }
 

@@ -1,5 +1,6 @@
 import { Node, NodeContainer } from "@/components/node";
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { RadioGroup } from "@/components/ui/radio-group";
+import { Separator } from "@/components/ui/separator";
 import { TabsContent } from "@/components/ui/tabs";
 import { pToMaster } from "@/lib/master";
 import { useProjectionStore } from "@/stores/projection.store";
@@ -31,55 +32,42 @@ interface MasterContentProps {
 function MasterContent({ id, contents, backgrounds, transitions }: MasterContentProps) {
     return (
         <TabsContent value={id}>
-            <ResizablePanelGroup
-                orientation="vertical"
-                className="h-full w-auto overflow-x-scroll! *:max-w-none! *:overflow-visible! *:data-[slot=resizable-panel]:w-fit!"
-            >
-                <ResizablePanel
-                    defaultSize="10rem"
-                    minSize="5rem"
-                    className="flex max-w-none! flex-col items-start gap-2 py-2"
-                >
-                    <span className="text-muted-foreground sticky left-0 px-4 text-xs">
-                        Content
-                    </span>
-                    <NodeContainer>
-                        {contents.map((c, i) => (
-                            <Node key={i} {...c} />
-                        ))}
-                    </NodeContainer>
-                </ResizablePanel>
-                <ResizableHandle className="sticky left-0 h-px!" />
-                <ResizablePanel
-                    defaultSize="5rem"
-                    minSize="5rem"
-                    className="flex max-w-none! flex-col items-start gap-2 py-2"
-                >
-                    <span className="text-muted-foreground sticky left-0 px-4 text-xs">
-                        Background
-                    </span>
-                    <NodeContainer>
-                        {backgrounds.map((bg, i) => (
-                            <Node key={i} type="background" label={bg} />
-                        ))}
-                    </NodeContainer>
-                </ResizablePanel>
-                <ResizableHandle className="sticky left-0 h-px!" />
-                <ResizablePanel
-                    defaultSize="5rem"
-                    minSize="5rem"
-                    className="flex max-w-none! flex-col items-start gap-2 py-2"
-                >
-                    <span className="text-muted-foreground sticky left-0 px-4 text-xs">
-                        Transition
-                    </span>
-                    <NodeContainer>
-                        {transitions.map((t, i) => (
-                            <Node key={i} type="transition" label={t} />
-                        ))}
-                    </NodeContainer>
-                </ResizablePanel>
-            </ResizablePanelGroup>
+            <RadioGroup defaultValue="0" className="flex size-full flex-col gap-0!">
+                <div className="relative flex h-full w-auto flex-col overflow-x-scroll!">
+                    <div className="flex min-h-17 flex-1 flex-col items-start gap-1 py-2">
+                        <span className="text-muted-foreground sticky left-0 px-4 text-xs">
+                            Content
+                        </span>
+                        <NodeContainer>
+                            {contents.map((c, i) => (
+                                <Node key={i} index={i} {...c} />
+                            ))}
+                        </NodeContainer>
+                    </div>
+                    <Separator className="sticky left-0 h-px" />
+                    <div className="flex h-17 min-h-17 flex-col items-start gap-1 py-2">
+                        <span className="text-muted-foreground sticky left-0 px-4 text-xs">
+                            Background
+                        </span>
+                        <NodeContainer>
+                            {backgrounds.map((bg, i) => (
+                                <Node key={i} index={i} type="background" label={bg} />
+                            ))}
+                        </NodeContainer>
+                    </div>
+                    <Separator className="sticky left-0 h-px" />
+                    <div className="flex h-17 min-h-17 flex-col items-start gap-1 py-2">
+                        <span className="text-muted-foreground sticky left-0 px-4 text-xs">
+                            Transition
+                        </span>
+                        <NodeContainer>
+                            {transitions.map((t, i) => (
+                                <Node key={i} index={i} type="transition" label={t} />
+                            ))}
+                        </NodeContainer>
+                    </div>
+                </div>
+            </RadioGroup>
         </TabsContent>
     );
 }
