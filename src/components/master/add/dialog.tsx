@@ -281,7 +281,7 @@ function TextInput() {
             </Field>
             <Field>
                 <FieldLabel className="gap-0.5" htmlFor="content-options-className">
-                    Style
+                    Tailwind Styling
                 </FieldLabel>
                 <Input
                     id="content-options-className"
@@ -290,7 +290,7 @@ function TextInput() {
                     placeholder="text-2xl text-red-500 font-semibold"
                 />
                 <FieldDescription>
-                    The style to apply to the content. See{" "}
+                    Applies{" "}
                     <a
                         href="https://tailwindcss.com/docs/styling-with-utility-classes"
                         target="_blank"
@@ -299,7 +299,7 @@ function TextInput() {
                     >
                         TailwindCSS
                     </a>{" "}
-                    docs.
+                    v4 utility classes.
                 </FieldDescription>
             </Field>
         </>
