@@ -21,7 +21,7 @@ type MasterStore = MasterState & MasterActions;
 
 const getProjectionIndexById = (id: string) => useProjectionStore.getState().getIndexById(id);
 export const useMasterStore = create<MasterStore>((set, get) => ({
-    activeTab: "master-1",
+    activeTab: "",
     activeProjectionIndex: -1,
     activeContentIndex: -1,
 

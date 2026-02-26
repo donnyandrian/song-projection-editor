@@ -83,6 +83,13 @@ export const GlobalKeyboardProvider = ({ children }: { children: React.ReactNode
                     shortcuts.current["ArrowDown"]?.();
                     break;
                 }
+                case "Delete": {
+                    e.preventDefault();
+                    if (e.shiftKey) shortcuts.current["Shift+Delete"]?.();
+                    else shortcuts.current["Delete"]?.();
+                    
+                    break;
+                }
                 default:
                     break;
             }

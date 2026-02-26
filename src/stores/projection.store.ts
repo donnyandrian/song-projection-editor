@@ -26,7 +26,9 @@ interface ProjectionActions {
     setProjectionsWithIds: (projections: Setter<ProjectionMasterWithId[]>) => void;
 
     addProjection: (projection: ProjectionMaster) => string;
-    addContent: (projectionIndex: number, content: ProjectionMaster["contents"][number]) => void;
+    deleteProjection: (projectionIndex: number) => string | null;
+    addContent: (projectionIndex: number, content: ProjectionMaster["contents"][number]) => number;
+    deleteContent: (projectionIndex: number, contentIndex: number) => number | null;
 }
 
 type ProjectionStore = ProjectionState & ProjectionActions;
@@ -125,15 +127,59 @@ export const useProjectionStore = create<ProjectionStore>((set, get) => ({
 
         return id;
     },
-    addContent: (projectionIndex, content) => {
+    deleteProjection: (projectionIndex) => {
+        if (projectionIndex > get().projections.length - 1 || projectionIndex < 0) return null;
+
+        let newId: string | null = null;
         set((s) => {
             const p = [...s.projections];
-            p[projectionIndex]!.contents.push(content);
+            p.splice(projectionIndex, 1);
+
+            const newIndex = projectionIndex === 0 ? -1 : projectionIndex - 1;
+            newId = p.length === 0 ? "" : (p[newIndex]?.id ?? "");
+
             useTransitionStore.getState().syncWithProjections(p);
             return {
                 ...backgroundMiner(p),
                 projections: p,
             };
         });
+
+        return newId;
+    },
+    addContent: (projectionIndex, content) => {
+        let last: number = -1;
+
+        set((s) => {
+            const p = [...s.projections];
+            last = p[projectionIndex]!.contents.push(content) - 1;
+            useTransitionStore.getState().syncWithProjections(p);
+            return {
+                ...backgroundMiner(p),
+                projections: p,
+            };
+        });
+
+        return last;
+    },
+    deleteContent: (projectionIndex, contentIndex) => {
+        if (projectionIndex > get().projections.length - 1 || projectionIndex < 0) return null;
+
+        let newIndex: number | null = null;
+        set((s) => {
+            const p = [...s.projections];
+            p[projectionIndex].contents.splice(contentIndex, 1);
+
+            if (p[projectionIndex].contents.length === 0 || contentIndex === 0) newIndex = -1;
+            else newIndex = contentIndex - 1;
+
+            useTransitionStore.getState().syncWithProjections(p);
+            return {
+                ...backgroundMiner(p),
+                projections: p,
+            };
+        });
+
+        return newIndex;
     },
 }));

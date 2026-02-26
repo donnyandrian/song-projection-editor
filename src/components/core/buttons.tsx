@@ -17,6 +17,7 @@ interface BaseIconButtonProps {
     label: string;
     icon: IconSvgElement;
     iconStrokeWidth?: number;
+    iconClassName?: string;
     text?: string;
     textClassName?: string;
     accelerator?: {
@@ -35,6 +36,7 @@ export const IconButton = memo(function IconButton({
     label,
     icon,
     iconStrokeWidth,
+    iconClassName,
     text,
     textClassName,
     onClick,
@@ -70,7 +72,7 @@ export const IconButton = memo(function IconButton({
                     aria-label={label}
                     onClick={onClick}
                 >
-                    <HugeiconsIcon icon={icon} strokeWidth={iconStrokeWidth ?? 2} />
+                    <HugeiconsIcon icon={icon} strokeWidth={iconStrokeWidth ?? 2} className={iconClassName} />
                     {text && <span className={textClassName}>{text}</span>}
                 </Button>
             </TooltipTrigger>
@@ -102,13 +104,19 @@ export const IconDropdownButton = memo(function IconDropdownButton({
     label,
     icon,
     iconStrokeWidth,
+    iconClassName,
     children,
 }: IconDropdownButtonProps) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <div>
-                    <IconButton label={label} icon={icon} iconStrokeWidth={iconStrokeWidth ?? 2} />
+                    <IconButton
+                        label={label}
+                        icon={icon}
+                        iconStrokeWidth={iconStrokeWidth ?? 2}
+                        iconClassName={iconClassName}
+                    />
                 </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent>

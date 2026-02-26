@@ -160,7 +160,7 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
                 }
             };
 
-            useProjectionStore.getState().addContent(index, {
+            const last = useProjectionStore.getState().addContent(index, {
                 type: data.get("type"),
                 content: data.get("content") as string,
                 ...typedData(),
@@ -171,11 +171,7 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
                 transition: (data.get("transition") as string).trim() || undefined,
             } as ContentT);
 
-            useMasterStore
-                .getState()
-                .setActiveContentIndex(
-                    useProjectionStore.getState().projections[index].contents.length - 1,
-                );
+            useMasterStore.getState().setActiveContentIndex(last);
             setOpenDialog(false);
         },
         [setOpenDialog],
