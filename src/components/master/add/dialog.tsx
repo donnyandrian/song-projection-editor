@@ -123,11 +123,7 @@ export function AddMasterQueue({ setOpenDialog }: DialogProps) {
 type ContentT = ProjectionMaster["contents"][number];
 export function AddMasterContent({ setOpenDialog }: DialogProps) {
     const currentProjection = useMemo(() => {
-        const activeTab = useMasterStore.getState().activeTab;
-        const index = useProjectionStore.getState().getIndexById(activeTab);
-        if (index < 0) return null;
-        const p = useProjectionStore.getState().projections[index];
-        return p;
+        return useMasterStore.getState().getActiveProjection();
     }, []);
 
     const [fields, setFields] = useState<React.ReactNode>(<TextInput />);
@@ -151,8 +147,7 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
             ev.preventDefault();
             const data = new FormData(ev.currentTarget);
 
-            const activeTab = useMasterStore.getState().activeTab;
-            const index = useProjectionStore.getState().getIndexById(activeTab);
+            const index = useMasterStore.getState().getActiveProjectionIndex();
             if (index < 0) return;
 
             const type = data.get("type") as ContentT["type"];
