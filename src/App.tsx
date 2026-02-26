@@ -11,7 +11,7 @@ export default function App() {
         <ResizablePanelGroup orientation="vertical" className="size-full">
             <ResizablePanel
                 defaultSize="55%"
-                minSize="10rem"
+                minSize="5rem"
                 className="bg-sidebar-accent relative"
             >
                 <div className="absolute top-full size-full shadow-[0px_-8px_42px_0px_rgba(0,0,0,0.15)]"></div>
@@ -22,8 +22,8 @@ export default function App() {
                 <TooltipProvider>
                     <ResizablePanel
                         defaultSize="45%"
-                        minSize="20rem"
-                        className="flex flex-col gap-2 py-2"
+                        minSize="16.25rem"
+                        className="flex flex-col gap-2"
                     >
                         <Editor />
                     </ResizablePanel>

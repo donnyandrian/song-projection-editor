@@ -1,9 +1,9 @@
 import { Tabs } from "@/components/ui/tabs";
 import { AddMasterButton, DeleteMasterButton, MasterTabs } from "@/components/master/queue";
 import { MasterContents } from "@/components/master/content";
-import { Button } from "@/components/ui/button";
 import { useMasterStore } from "@/stores/master.store";
 import { useShallow } from "zustand/react/shallow";
+import { Inspector } from "@/components/master/inspector";
 
 export function Editor() {
     const [activeTab, setActiveTab] = useMasterStore(
@@ -13,21 +13,23 @@ export function Editor() {
     const hasActiveTab = useMasterStore((s) => s.activeProjectionIndex >= 0);
 
     return (
-        <>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="size-full">
+        <div className="flex size-full flex-row overflow-hidden">
+            <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="flex flex-1 flex-col overflow-hidden pt-2"
+            >
                 <div className="flex w-full flex-row items-center gap-4 px-4">
-                    <span className="text-muted-foreground text-sm">Queue</span>
+                    <h3 className="text-muted-foreground text-sm font-medium">Queue</h3>
                     <MasterTabs />
                     <AddMasterButton />
                     {hasActiveTab && <DeleteMasterButton />}
                 </div>
                 <MasterContents />
             </Tabs>
-            <div className="flex flex-row items-center justify-center gap-4 px-4 *:text-sm">
-                <Button variant={"default"}>Contents</Button>
-                <Button variant={"default"}>Transition</Button>
-                <Button variant={"default"}>Background</Button>
-            </div>
-        </>
+            <aside className="bg-background hidden flex-col border-l sm:flex sm:w-80">
+                <Inspector />
+            </aside>
+        </div>
     );
 }

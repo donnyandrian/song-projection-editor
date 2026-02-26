@@ -28,6 +28,13 @@ interface ProjectionActions {
     addProjection: (projection: ProjectionMaster) => string;
     deleteProjection: (projectionIndex: number) => string | null;
     addContent: (projectionIndex: number, content: ProjectionMaster["contents"][number]) => number;
+    updateContent: (
+        projectionIndex: number,
+        contentIndex: number,
+        updater: (
+            old: ProjectionMaster["contents"][number],
+        ) => ProjectionMaster["contents"][number],
+    ) => void;
     deleteContent: (projectionIndex: number, contentIndex: number) => number | null;
 }
 
@@ -161,6 +168,21 @@ export const useProjectionStore = create<ProjectionStore>((set, get) => ({
         });
 
         return last;
+    },
+    updateContent: (projectionIndex, contentIndex, updater) => {
+        set((s) => {
+            const p = [...s.projections];
+            const oldContent = p[projectionIndex].contents[contentIndex];
+            if (!oldContent) return s;
+
+            p[projectionIndex].contents[contentIndex] = updater(oldContent);
+
+            useTransitionStore.getState().syncWithProjections(p);
+            return {
+                ...backgroundMiner(p),
+                projections: p,
+            };
+        });
     },
     deleteContent: (projectionIndex, contentIndex) => {
         if (projectionIndex > get().projections.length - 1 || projectionIndex < 0) return null;
