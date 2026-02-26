@@ -1,16 +1,16 @@
 import { create } from "zustand";
 
-interface TabsState {
+interface MasterState {
     activeTab: string;
 }
 
-interface TabsActions {
+interface MasterActions {
     setActiveTab: (tab: string) => void;
 }
 
-type TabsStore = TabsState & TabsActions;
+type MasterStore = MasterState & MasterActions;
 
-export const useTabsStore = create<TabsStore>((set) => ({
+export const useMasterStore = create<MasterStore>((set) => ({
     activeTab: "master-1",
 
     setActiveTab: (tab) => set({ activeTab: tab }),

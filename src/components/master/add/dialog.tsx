@@ -23,7 +23,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useProjectionStore } from "@/stores/projection.store";
-import { useTabsStore } from "@/stores/tabs.store";
+import { useMasterStore } from "@/stores/master.store";
 import type { ProjectionMaster, ProjectionTransition } from "@/types";
 import { useCallback, useMemo, useState } from "react";
 
@@ -48,7 +48,7 @@ export function AddMasterQueue({ setOpenDialog }: DialogProps) {
                 ],
             });
 
-            useTabsStore.getState().setActiveTab(id);
+            useMasterStore.getState().setActiveTab(id);
 
             setOpenDialog(false);
         },
@@ -123,7 +123,7 @@ export function AddMasterQueue({ setOpenDialog }: DialogProps) {
 type ContentT = ProjectionMaster["contents"][number];
 export function AddMasterContent({ setOpenDialog }: DialogProps) {
     const currentProjection = useMemo(() => {
-        const activeTab = useTabsStore.getState().activeTab;
+        const activeTab = useMasterStore.getState().activeTab;
         const index = useProjectionStore.getState().getIndexById(activeTab);
         if (index < 0) return null;
         const p = useProjectionStore.getState().projections[index];
@@ -151,7 +151,7 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
             ev.preventDefault();
             const data = new FormData(ev.currentTarget);
 
-            const activeTab = useTabsStore.getState().activeTab;
+            const activeTab = useMasterStore.getState().activeTab;
             const index = useProjectionStore.getState().getIndexById(activeTab);
             if (index < 0) return;
 

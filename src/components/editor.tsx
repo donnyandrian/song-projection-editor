@@ -2,11 +2,11 @@ import { Tabs } from "@/components/ui/tabs";
 import { AddMasterButton, MasterTabs } from "@/components/master/queue";
 import { MasterContents } from "@/components/master/content";
 import { Button } from "@/components/ui/button";
-import { useTabsStore } from "@/stores/tabs.store";
+import { useMasterStore } from "@/stores/master.store";
 import { useShallow } from "zustand/react/shallow";
 
 export function Editor() {
-    const [activeTab, setActiveTab] = useTabsStore(
+    const [activeTab, setActiveTab] = useMasterStore(
         useShallow((s) => [s.activeTab, s.setActiveTab]),
     );
 
