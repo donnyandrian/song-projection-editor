@@ -10,7 +10,8 @@ import { bgTransitionVariants, useTransitionStore } from "@/stores/transition.st
 import type { ProjectionItem } from "@/types";
 import { AnimatePresence } from "motion/react";
 import * as motion from "motion/react-client";
-import { memo, useMemo } from "react";
+import { memo } from "react";
+import { useShallow } from "zustand/react/shallow";
 
 const BackcoverSwitcher = memo(function BackcoverSwitcher({ isShowBg }: { isShowBg: boolean }) {
     return (
@@ -71,22 +72,23 @@ export const SlideBackgroundComposer = memo(function SlideBackgroundComposer({
     currentProjection,
     currentIndex,
 }: SlideComposerProps) {
+    // Read the background reactively so it updates when changed in Inspector
+    const rawBackground = useProjectionStore(
+        (s) => s.getBackground(currentProjection, currentIndex)[0],
+    );
+
     const background = useRetain(
         () => {
             if (currentProjection < 0 || currentIndex < 0) return;
-
-            return useProjectionStore.getState().getBackground(currentProjection, currentIndex)[0];
+            return rawBackground;
         },
-        [currentProjection, currentIndex],
+        [currentProjection, currentIndex, rawBackground],
         "",
     );
     // @ts-expect-error
-    const isShowBg = true /* !isTransparent(background) */;
+    const isShowBg = true; /* !isTransparent(background) */
 
-    const transition = useMemo(() => {
-        return useTransitionStore.getState().getTransition(currentProjection, currentIndex);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [background]);
+    const transition = useTransitionStore((s) => s.getTransition(currentProjection, currentIndex));
 
     return (
         <>
@@ -105,10 +107,8 @@ export const SlideComposer = memo(function SlideComposer({
     currentProjection,
     currentIndex,
 }: SlideComposerProps) {
-    const getContents = useProjectionStore((s) => s.getContents);
-    const content = useMemo(
-        () => getContents(currentProjection)[currentIndex] ?? null,
-        [currentIndex, getContents, currentProjection],
+    const content = useProjectionStore(
+        useShallow((s) => s.projections[currentProjection]?.contents[currentIndex] ?? null),
     );
 
     return (
@@ -123,34 +123,36 @@ export const SlideComposer = memo(function SlideComposer({
     );
 });
 
-const SlideComposerContent = memo(function SlideComposerContent({
-    content,
-}: {
-    content: ProjectionItem;
-}) {
-    switch (content.type) {
-        case "Video":
-            return <VideoPlayer src={content.content} autoPlay loop muted />;
-        case "Image":
-            return (
-                <img
-                    src={content.content}
-                    alt="Content Image"
-                    className="size-full object-contain"
-                />
-            );
-        case "Text":
-            return (
-                <span
-                    className={cn("text-8xl font-bold text-white", content.options?.className)}
-                    style={{ ...content.options?.style }}
-                >
-                    {content.content}
-                </span>
-            );
-        case "Component":
-            return content.content;
-        default:
-            return null;
-    }
-});
+const SlideComposerContent = memo(
+    function SlideComposerContent({ content }: { content: ProjectionItem }) {
+        switch (content.type) {
+            case "Video":
+                return <VideoPlayer src={content.content} autoPlay loop muted />;
+            case "Image":
+                return (
+                    <img
+                        src={content.content}
+                        alt="Content Image"
+                        className="size-full object-contain"
+                    />
+                );
+            case "Text":
+                return (
+                    <span
+                        className={cn("text-8xl font-bold text-white", content.options?.className)}
+                        style={{ ...content.options?.style }}
+                    >
+                        {content.content}
+                    </span>
+                );
+            case "Component":
+                return content.content;
+            default:
+                return null;
+        }
+    },
+    (prev, next) => {
+        // Custom deep equality check for the memo since options/styles might be mutated
+        return JSON.stringify(prev.content) === JSON.stringify(next.content);
+    },
+);

@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import { memo } from "react";
 import { AnimatePresence } from "motion/react";
 import * as motion from "motion/react-client";
 
@@ -51,7 +51,7 @@ const ForegroundAnimator = memo(
             </AnimatePresence>
         );
     },
-    (prev, next) => prev.motionKey === next.motionKey,
+    (prev, next) => prev.motionKey === next.motionKey && prev.transition === next.transition,
 );
 
 const buildFKey = (projection: number, index: number) => {
@@ -66,10 +66,7 @@ export const Viewer = memo(function Viewer({
     currentIndex = 0,
 }: ViewerProps) {
     const motionKey = buildFKey(currentProjection, currentIndex);
-    const transition = useMemo(() => {
-        return useTransitionStore.getState().getTransition(currentProjection, currentIndex);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [motionKey]);
+    const transition = useTransitionStore((s) => s.getTransition(currentProjection, currentIndex));
 
     return (
         <>

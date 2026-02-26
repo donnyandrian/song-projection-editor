@@ -142,7 +142,7 @@ export const useProjectionStore = create<ProjectionStore>((set, get) => ({
             const p = [...s.projections];
             p.splice(projectionIndex, 1);
 
-            const newIndex = projectionIndex === 0 ? -1 : projectionIndex - 1;
+            const newIndex = projectionIndex === 0 ? 0 : projectionIndex - 1;
             newId = p.length === 0 ? "" : (p[newIndex]?.id ?? "");
 
             useTransitionStore.getState().syncWithProjections(p);
@@ -192,7 +192,8 @@ export const useProjectionStore = create<ProjectionStore>((set, get) => ({
             const p = [...s.projections];
             p[projectionIndex].contents.splice(contentIndex, 1);
 
-            if (p[projectionIndex].contents.length === 0 || contentIndex === 0) newIndex = -1;
+            if (p[projectionIndex].contents.length === 0) newIndex = -1;
+            else if (contentIndex === 0) newIndex = 0;
             else newIndex = contentIndex - 1;
 
             useTransitionStore.getState().syncWithProjections(p);
