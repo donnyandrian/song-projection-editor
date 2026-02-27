@@ -296,18 +296,24 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
     );
 }
 
+const generateId = () => {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+    return Date.now().toString();
+};
 function TextInput() {
-    const [styles, setStyles] = useState<{ id: number; key: string; value: string }[]>([]);
+    const [styles, setStyles] = useState<{ id: string; key: string; value: string }[]>([]);
 
     const addStyle = () => {
-        setStyles((prev) => [...prev, { id: Date.now(), key: "", value: "" }]);
+        setStyles((prev) => [...prev, { id: generateId(), key: "", value: "" }]);
     };
 
-    const removeStyle = (id: number) => {
+    const removeStyle = (id: string) => {
         setStyles((prev) => prev.filter((s) => s.id !== id));
     };
 
-    const updateStyle = (id: number, field: "key" | "value", val: string) => {
+    const updateStyle = (id: string, field: "key" | "value", val: string) => {
         setStyles((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: val } : s)));
     };
 
