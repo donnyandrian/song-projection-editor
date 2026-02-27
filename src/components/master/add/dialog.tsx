@@ -6,13 +6,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import {
-    Field,
-    FieldDescription,
-    FieldGroup,
-    FieldLabel,
-    FieldSeparator,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel, FieldSeparator } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -22,21 +16,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import {
-    Combobox,
-    ComboboxContent,
-    ComboboxEmpty,
-    ComboboxInput,
-    ComboboxItem,
-    ComboboxList,
-} from "@/components/ui/combobox";
 import { useProjectionStore } from "@/stores/projection.store";
 import { useMasterStore } from "@/stores/master.store";
 import type { ProjectionMaster, ProjectionTransition } from "@/types";
 import { useCallback, useMemo, useState } from "react";
-import { CSS_PROPERTIES } from "@/const/css";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Add01Icon, Cancel01Icon } from "@hugeicons-pro/core-stroke-rounded";
+import { CssStylesInput, type StyleItem } from "@/components/master/shared/css-styles-input";
 
 interface DialogProps {
     setOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
@@ -164,15 +148,12 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
                         try {
                             const styleStr = data.get("options-style") as string;
                             if (styleStr) {
-                                const parsed = JSON.parse(styleStr) as {
-                                    key: string;
-                                    value: string;
-                                }[];
+                                const parsed = JSON.parse(styleStr) as StyleItem[];
                                 if (parsed.length > 0) {
                                     style = {};
                                     parsed.forEach((s) => {
-                                        if (s.key && s.value) {
-                                            style![s.key] = s.value;
+                                        if (s.property && s.value) {
+                                            style![s.property] = s.value;
                                         }
                                     });
                                 }
@@ -296,26 +277,8 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
     );
 }
 
-const generateId = () => {
-    if (typeof crypto !== "undefined" && crypto.randomUUID) {
-        return crypto.randomUUID();
-    }
-    return Date.now().toString();
-};
 function TextInput() {
-    const [styles, setStyles] = useState<{ id: string; key: string; value: string }[]>([]);
-
-    const addStyle = () => {
-        setStyles((prev) => [...prev, { id: generateId(), key: "", value: "" }]);
-    };
-
-    const removeStyle = (id: string) => {
-        setStyles((prev) => prev.filter((s) => s.id !== id));
-    };
-
-    const updateStyle = (id: string, field: "key" | "value", val: string) => {
-        setStyles((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: val } : s)));
-    };
+    const [styles, setStyles] = useState<StyleItem[]>([]);
 
     return (
         <>
@@ -331,73 +294,8 @@ function TextInput() {
                     placeholder="This is a text content"
                 />
             </Field>
-            <Field>
-                <FieldLabel>CSS Styles</FieldLabel>
-                <div className="flex flex-col gap-2">
-                    {styles.map((style) => {
-                        const comboboxValue = CSS_PROPERTIES.includes(style.key) ? style.key : "";
-                        return (
-                            <div
-                                key={style.id}
-                                className="flex items-center gap-2 last-of-type:mb-2"
-                            >
-                                <div className="flex-1">
-                                    <Combobox
-                                        items={CSS_PROPERTIES}
-                                        value={comboboxValue}
-                                        autoHighlight
-                                        onValueChange={(val) =>
-                                            val && updateStyle(style.id, "key", val)
-                                        }
-                                    >
-                                        <ComboboxInput placeholder="Property" />
-                                        <ComboboxContent className="w-60">
-                                            <ComboboxEmpty>No match found.</ComboboxEmpty>
-                                            <ComboboxList>
-                                                {(item: string) => (
-                                                    <ComboboxItem key={item} value={item}>
-                                                        {item}
-                                                    </ComboboxItem>
-                                                )}
-                                            </ComboboxList>
-                                        </ComboboxContent>
-                                    </Combobox>
-                                </div>
-                                <div className="flex-1">
-                                    <Input
-                                        value={style.value}
-                                        onChange={(e) =>
-                                            updateStyle(style.id, "value", e.target.value)
-                                        }
-                                        placeholder="Value"
-                                    />
-                                </div>
-                                <Button
-                                    type="button" // Important: Prevents form submission
-                                    variant={"ghost"}
-                                    size={"icon"}
-                                    className="text-muted-foreground hover:text-destructive px-2! py-0"
-                                    aria-label={"Remove"}
-                                    onClick={() => removeStyle(style.id)}
-                                >
-                                    <span className="sr-only">Remove</span>
-                                    <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2.25} />
-                                </Button>
-                            </div>
-                        );
-                    })}
-                    <Button type="button" variant="outline" size="sm" onClick={addStyle}>
-                        <HugeiconsIcon icon={Add01Icon} strokeWidth={2.25} />
-                        Add Property
-                    </Button>
-                </div>
-                {/* Hidden input to pass state seamlessly to FormData in handleSubmit */}
-                <input type="hidden" name="options-style" value={JSON.stringify(styles)} />
-                <FieldDescription>
-                    Define custom React CSS properties for this text element. Use camelCase
-                    formatting.
-                </FieldDescription>
-            </Field>
+            <CssStylesInput styles={styles} onChange={setStyles} />
+            <input type="hidden" name="options-style" value={JSON.stringify(styles)} />
         </>
     );
 }

@@ -42,6 +42,8 @@ export function Inspector() {
         updateContent(activeProjectionIndex, activeContentIndex, updater);
     };
 
+    const itemKey = `${activeProjectionIndex}-${activeContentIndex}`;
+
     return (
         <div className="bg-background flex h-full flex-col overflow-hidden">
             <div className="border-b px-4 py-3">
@@ -64,7 +66,11 @@ export function Inspector() {
                 </div>
 
                 <div className="no-scrollbar relative flex-1 overflow-y-auto p-4">
-                    <InspectorContentTab activeItem={activeItem} handleUpdate={handleUpdate} />
+                    <InspectorContentTab
+                        itemKey={itemKey}
+                        activeItem={activeItem}
+                        handleUpdate={handleUpdate}
+                    />
                     <InspectorBackgroundTab
                         activeItem={activeItem}
                         handleUpdate={handleUpdate}
@@ -81,7 +87,10 @@ interface TabProps {
     activeItem: ProjectionItem;
     handleUpdate: HandleUpdate;
 }
-function InspectorContentTab({ activeItem, handleUpdate }: TabProps) {
+interface ContentTabProps extends TabProps {
+    itemKey: string;
+}
+function InspectorContentTab({ itemKey, activeItem, handleUpdate }: ContentTabProps) {
     const typeChanged = (val: "Text" | "Image" | "Video") => {
         handleUpdate((old) => {
             // Extract the base fields shared across all primitive/text items
@@ -168,7 +177,11 @@ function InspectorContentTab({ activeItem, handleUpdate }: TabProps) {
                 </Field>
 
                 {activeItem.type === "Text" && (
-                    <TextStyleField activeItem={activeItem} handleUpdate={handleUpdate} />
+                    <TextStyleField
+                        key={itemKey}
+                        activeItem={activeItem}
+                        handleUpdate={handleUpdate}
+                    />
                 )}
             </FieldGroup>
         </TabsContent>
