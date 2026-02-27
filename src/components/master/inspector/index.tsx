@@ -18,9 +18,8 @@ import {
     FieldSeparator,
 } from "@/components/ui/field";
 import type { ProjectionItem, ProjectionTransition, ProjectionMaster } from "@/types";
-
-type HandleUpdate = (updater: (old: ProjectionItem) => ProjectionItem) => void;
-type InputChanged = (e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) => void;
+import { TextStyleField } from "@/components/master/inspector/text";
+import type { HandleUpdate, InputChanged } from "@/types/inspector";
 
 export function Inspector() {
     const activeProjectionIndex = useMasterStore((s) => s.activeProjectionIndex);
@@ -64,7 +63,7 @@ export function Inspector() {
                     </TabsList>
                 </div>
 
-                <div className="no-scrollbar flex-1 overflow-y-auto p-4">
+                <div className="no-scrollbar relative flex-1 overflow-y-auto p-4">
                     <InspectorContentTab activeItem={activeItem} handleUpdate={handleUpdate} />
                     <InspectorBackgroundTab
                         activeItem={activeItem}
@@ -115,21 +114,6 @@ function InspectorContentTab({ activeItem, handleUpdate }: TabProps) {
             // Discard Component edits as string, fallback for Primitives and Text
             if (old.type === "Component") return old;
             return { ...old, content: e.target.value };
-        });
-    };
-
-    // Text specific event
-    const tailwindChanged: InputChanged = (e) => {
-        handleUpdate((old) => {
-            if (old.type !== "Text") return old;
-
-            return {
-                ...old,
-                options: {
-                    ...old.options,
-                    className: e.target.value,
-                },
-            };
         });
     };
 
@@ -184,26 +168,7 @@ function InspectorContentTab({ activeItem, handleUpdate }: TabProps) {
                 </Field>
 
                 {activeItem.type === "Text" && (
-                    <Field>
-                        <FieldLabel>Tailwind Styling</FieldLabel>
-                        <Input
-                            value={activeItem.options?.className ?? ""}
-                            onChange={tailwindChanged}
-                            placeholder="text-2xl text-red-500 font-bold"
-                        />
-                        <FieldDescription>
-                            Applies{" "}
-                            <a
-                                href="https://tailwindcss.com/docs/styling-with-utility-classes"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="font-semibold"
-                            >
-                                TailwindCSS
-                            </a>{" "}
-                            v4 utility classes.
-                        </FieldDescription>
-                    </Field>
+                    <TextStyleField activeItem={activeItem} handleUpdate={handleUpdate} />
                 )}
             </FieldGroup>
         </TabsContent>
