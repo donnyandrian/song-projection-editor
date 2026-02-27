@@ -22,10 +22,21 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import {
+    Combobox,
+    ComboboxContent,
+    ComboboxEmpty,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+} from "@/components/ui/combobox";
 import { useProjectionStore } from "@/stores/projection.store";
 import { useMasterStore } from "@/stores/master.store";
 import type { ProjectionMaster, ProjectionTransition } from "@/types";
 import { useCallback, useMemo, useState } from "react";
+import { CSS_PROPERTIES } from "@/const/css";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Add01Icon, Cancel01Icon } from "@hugeicons-pro/core-stroke-rounded";
 
 interface DialogProps {
     setOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
@@ -148,13 +159,34 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
             const type = data.get("type") as ContentT["type"];
             const typedData = () => {
                 switch (type) {
-                    case "Text":
+                    case "Text": {
+                        let style: Record<string, string> | undefined = undefined;
+                        try {
+                            const styleStr = data.get("options-style") as string;
+                            if (styleStr) {
+                                const parsed = JSON.parse(styleStr) as {
+                                    key: string;
+                                    value: string;
+                                }[];
+                                if (parsed.length > 0) {
+                                    style = {};
+                                    parsed.forEach((s) => {
+                                        if (s.key && s.value) {
+                                            style![s.key] = s.value;
+                                        }
+                                    });
+                                }
+                            }
+                        } catch (e) {
+                            console.error("Failed to parse styles", e);
+                        }
+
                         return {
                             options: {
-                                className:
-                                    (data.get("options-className") as string).trim() || undefined,
+                                style,
                             } as Extract<ContentT, { type: "Text" }>["options"],
                         };
+                    }
                     default:
                         return {};
                 }
@@ -265,6 +297,20 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
 }
 
 function TextInput() {
+    const [styles, setStyles] = useState<{ id: number; key: string; value: string }[]>([]);
+
+    const addStyle = () => {
+        setStyles((prev) => [...prev, { id: Date.now(), key: "", value: "" }]);
+    };
+
+    const removeStyle = (id: number) => {
+        setStyles((prev) => prev.filter((s) => s.id !== id));
+    };
+
+    const updateStyle = (id: number, field: "key" | "value", val: string) => {
+        setStyles((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: val } : s)));
+    };
+
     return (
         <>
             <Field>
@@ -280,26 +326,70 @@ function TextInput() {
                 />
             </Field>
             <Field>
-                <FieldLabel className="gap-0.5" htmlFor="content-options-className">
-                    Tailwind Styling
-                </FieldLabel>
-                <Input
-                    id="content-options-className"
-                    name="options-className"
-                    type="text"
-                    placeholder="text-2xl text-red-500 font-semibold"
-                />
+                <FieldLabel>CSS Styles</FieldLabel>
+                <div className="flex flex-col gap-2">
+                    {styles.map((style) => {
+                        const comboboxValue = CSS_PROPERTIES.includes(style.key) ? style.key : "";
+                        return (
+                            <div
+                                key={style.id}
+                                className="flex items-center gap-2 last-of-type:mb-2"
+                            >
+                                <div className="flex-1">
+                                    <Combobox
+                                        items={CSS_PROPERTIES}
+                                        value={comboboxValue}
+                                        autoHighlight
+                                        onValueChange={(val) =>
+                                            val && updateStyle(style.id, "key", val)
+                                        }
+                                    >
+                                        <ComboboxInput placeholder="Property" />
+                                        <ComboboxContent className="w-60">
+                                            <ComboboxEmpty>No match found.</ComboboxEmpty>
+                                            <ComboboxList>
+                                                {(item: string) => (
+                                                    <ComboboxItem key={item} value={item}>
+                                                        {item}
+                                                    </ComboboxItem>
+                                                )}
+                                            </ComboboxList>
+                                        </ComboboxContent>
+                                    </Combobox>
+                                </div>
+                                <div className="flex-1">
+                                    <Input
+                                        value={style.value}
+                                        onChange={(e) =>
+                                            updateStyle(style.id, "value", e.target.value)
+                                        }
+                                        placeholder="Value"
+                                    />
+                                </div>
+                                <Button
+                                    type="button" // Important: Prevents form submission
+                                    variant={"ghost"}
+                                    size={"icon"}
+                                    className="text-muted-foreground hover:text-destructive px-2! py-0"
+                                    aria-label={"Remove"}
+                                    onClick={() => removeStyle(style.id)}
+                                >
+                                    <span className="sr-only">Remove</span>
+                                    <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2.25} />
+                                </Button>
+                            </div>
+                        );
+                    })}
+                    <Button type="button" variant="outline" size="sm" onClick={addStyle}>
+                        <HugeiconsIcon icon={Add01Icon} strokeWidth={2.25} />
+                        Add Property
+                    </Button>
+                </div>
+                {/* Hidden input to pass state seamlessly to FormData in handleSubmit */}
+                <input type="hidden" name="options-style" value={JSON.stringify(styles)} />
                 <FieldDescription>
-                    Applies{" "}
-                    <a
-                        href="https://tailwindcss.com/docs/styling-with-utility-classes"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-semibold"
-                    >
-                        TailwindCSS
-                    </a>{" "}
-                    v4 utility classes.
+                    Define custom React CSS properties for this text element. Use camelCase
+                    formatting.
                 </FieldDescription>
             </Field>
         </>
