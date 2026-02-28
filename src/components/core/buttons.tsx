@@ -30,9 +30,13 @@ interface BaseIconButtonProps {
 }
 
 interface IconButtonProps extends BaseIconButtonProps {
+    type?: React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
+    size?: React.ComponentProps<typeof Button>["size"];
     onClick?: () => void;
 }
 export const IconButton = memo(function IconButton({
+    type,
+    size,
     label,
     icon,
     iconStrokeWidth,
@@ -66,8 +70,9 @@ export const IconButton = memo(function IconButton({
         <Tooltip>
             <TooltipTrigger asChild>
                 <Button
+                    type={type}
                     variant={"outline"}
-                    size={text ? "default" : "icon"}
+                    size={size ?? (text ? "default" : "icon")}
                     className="px-2! py-0"
                     aria-label={label}
                     onClick={onClick}

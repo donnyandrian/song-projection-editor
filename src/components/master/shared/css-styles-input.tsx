@@ -10,9 +10,17 @@ import {
 } from "@/components/ui/combobox";
 import { CSS_PROPERTIES } from "@/const/css";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Add01Icon, Cancel01Icon } from "@hugeicons-pro/core-stroke-rounded";
+import {
+    Add01Icon,
+    Cancel01Icon,
+    Copy01Icon,
+    Task01Icon,
+} from "@hugeicons-pro/core-stroke-rounded";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { generateId } from "@/lib/utils";
+import { StyleClipboardSchema } from "@/schemas/css-styles-input";
+import { IconButton } from "@/components/core/buttons";
+import { ButtonGroup } from "@/components/ui/button-group";
 
 export interface StyleItem {
     id: string;
@@ -38,6 +46,41 @@ export function CssStylesInput({ styles, onChange }: CssStylesInputProps) {
         onChange(styles.map((s) => (s.id === id ? { ...s, [field]: val } : s)));
     };
 
+    const handleCopy = async () => {
+        try {
+            // Only copy the essential data, stripping out the unique IDs
+            const stylesToCopy = styles.map(({ property, value }) => ({
+                property,
+                value,
+            }));
+            await navigator.clipboard.writeText(JSON.stringify(stylesToCopy));
+        } catch (err) {
+            console.error("Failed to copy styles to clipboard: ", err);
+        }
+    };
+
+    const handlePaste = async () => {
+        try {
+            const text = await navigator.clipboard.readText();
+            const parsed: unknown = JSON.parse(text);
+
+            // Validate the pasted JSON matches our expected shape
+            const validatedStyles = StyleClipboardSchema.parse(parsed);
+
+            // Generate new IDs for the pasted styles so they don't collide
+            const newStyles: StyleItem[] = validatedStyles.map((style) => ({
+                id: generateId(),
+                property: style.property,
+                value: style.value,
+            }));
+
+            // Append pasted styles to existing styles
+            onChange([...styles, ...newStyles]);
+        } catch (err) {
+            console.error("Failed to paste styles from clipboard. Data may be invalid. ", err);
+        }
+    };
+
     return (
         <Field>
             <FieldLabel>CSS Styles</FieldLabel>
@@ -49,7 +92,7 @@ export function CssStylesInput({ styles, onChange }: CssStylesInputProps) {
 
                     return (
                         <div key={style.id} className="flex items-center gap-2 last-of-type:mb-2">
-                            <div className="flex-1">
+                            <ButtonGroup>
                                 <Combobox
                                     items={CSS_PROPERTIES}
                                     value={comboboxValue}
@@ -58,7 +101,7 @@ export function CssStylesInput({ styles, onChange }: CssStylesInputProps) {
                                         val && updateStyle(style.id, "property", val)
                                     }
                                 >
-                                    <ComboboxInput placeholder="Property" />
+                                    <ComboboxInput placeholder="Property" className="flex-1" />
                                     <ComboboxContent className="w-60">
                                         <ComboboxEmpty>No match found.</ComboboxEmpty>
                                         <ComboboxList>
@@ -70,14 +113,13 @@ export function CssStylesInput({ styles, onChange }: CssStylesInputProps) {
                                         </ComboboxList>
                                     </ComboboxContent>
                                 </Combobox>
-                            </div>
-                            <div className="flex-1">
                                 <Input
                                     value={style.value}
                                     onChange={(e) => updateStyle(style.id, "value", e.target.value)}
                                     placeholder="Value"
+                                    className="flex-1"
                                 />
-                            </div>
+                            </ButtonGroup>
                             <Button
                                 type="button" // Prevents parent form submission
                                 variant={"ghost"}
@@ -92,10 +134,35 @@ export function CssStylesInput({ styles, onChange }: CssStylesInputProps) {
                         </div>
                     );
                 })}
-                <Button type="button" variant="outline" size="sm" onClick={addStyle}>
-                    <HugeiconsIcon icon={Add01Icon} strokeWidth={2.25} />
-                    Add Property
-                </Button>
+                <ButtonGroup className="w-full items-center">
+                    <ButtonGroup className="mr-auto">
+                        <Button type="button" variant="outline" size="sm" onClick={addStyle}>
+                            <HugeiconsIcon icon={Add01Icon} strokeWidth={2.25} />
+                            Add Property
+                        </Button>
+                    </ButtonGroup>
+
+                    <ButtonGroup>
+                        <IconButton
+                            type="button"
+                            size="icon-sm"
+                            label="Copy styles"
+                            icon={Copy01Icon}
+                            iconStrokeWidth={2}
+                            iconClassName="size-3.5"
+                            onClick={handleCopy}
+                        />
+                        <IconButton
+                            type="button"
+                            size="icon-sm"
+                            label="Paste styles"
+                            icon={Task01Icon}
+                            iconStrokeWidth={2}
+                            iconClassName="size-3.5"
+                            onClick={handlePaste}
+                        />
+                    </ButtonGroup>
+                </ButtonGroup>
             </div>
             <FieldDescription>
                 Define custom React CSS properties for this text element. Use camelCase formatting.
