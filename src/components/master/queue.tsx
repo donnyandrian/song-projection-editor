@@ -66,13 +66,18 @@ export function AddMasterButton() {
 
     return (
         <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-            <IconDropdownButton label="Add Item" icon={Add01Icon} iconStrokeWidth={2.5}>
+            <IconDropdownButton
+                size="icon-sm"
+                label="Add Item"
+                icon={Add01Icon}
+                iconStrokeWidth={2.25}
+            >
                 <DialogTrigger asChild>
                     <IconDropdownMenuItem
                         label={"Add Queue"}
                         text="Queue"
                         icon={KeyframesDoubleIcon}
-                        iconStrokeWidth={2}
+                        iconStrokeWidth={1.75}
                         onSelect={() => setDialogType("queue")}
                         accelerator={{
                             key: "A",
@@ -86,7 +91,7 @@ export function AddMasterButton() {
                             label={"Add Content"}
                             text="Content"
                             icon={Layers01Icon}
-                            iconStrokeWidth={2}
+                            iconStrokeWidth={1.75}
                             onSelect={() => setDialogType("content")}
                             accelerator={{
                                 key: "A",
@@ -122,7 +127,7 @@ export function DeleteMasterButton() {
         register("Delete", () => {
             if ((useMasterStore.getState().getActiveProjection()?.contents?.length ?? 0) <= 0)
                 return;
-            
+
             setDialogType("content");
             setOpenDialog(true);
         });
@@ -140,9 +145,10 @@ export function DeleteMasterButton() {
     return (
         <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
             <IconDropdownButton
+                size="icon-sm"
                 label="Delete Item"
                 icon={Delete03Icon}
-                iconStrokeWidth={2}
+                iconStrokeWidth={1.75}
                 iconClassName="text-destructive"
             >
                 <AlertDialogTrigger asChild>
@@ -150,7 +156,7 @@ export function DeleteMasterButton() {
                         label={"Delete Queue"}
                         text="Queue"
                         icon={KeyframesDoubleIcon}
-                        iconStrokeWidth={2}
+                        iconStrokeWidth={1.75}
                         onSelect={() => setDialogType("queue")}
                         accelerator={{
                             key: "Delete",
@@ -164,7 +170,7 @@ export function DeleteMasterButton() {
                             label={"Delete Content"}
                             text="Content"
                             icon={Layers01Icon}
-                            iconStrokeWidth={2}
+                            iconStrokeWidth={1.75}
                             onSelect={() => setDialogType("content")}
                             accelerator={{
                                 key: "Delete",

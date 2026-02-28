@@ -4,6 +4,7 @@ import { MasterContents } from "@/components/master/content";
 import { useMasterStore } from "@/stores/master.store";
 import { useShallow } from "zustand/react/shallow";
 import { Inspector } from "@/components/master/inspector";
+import { ButtonGroup } from "@/components/ui/button-group";
 
 export function Editor() {
     const [activeTab, setActiveTab] = useMasterStore(
@@ -22,8 +23,16 @@ export function Editor() {
                 <div className="flex w-full flex-row items-center gap-4 px-4">
                     <h3 className="text-muted-foreground text-sm font-medium">Queue</h3>
                     <MasterTabs />
-                    <AddMasterButton />
-                    {hasActiveTab && <DeleteMasterButton />}
+                    <ButtonGroup>
+                        <ButtonGroup>
+                            <AddMasterButton />
+                        </ButtonGroup>
+                        {hasActiveTab && (
+                            <ButtonGroup>
+                                <DeleteMasterButton />
+                            </ButtonGroup>
+                        )}
+                    </ButtonGroup>
                 </div>
                 <MasterContents />
             </Tabs>

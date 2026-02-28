@@ -149,7 +149,6 @@ export function CssStylesInput({ styles, onChange }: CssStylesInputProps) {
                             label="Copy styles"
                             icon={Copy01Icon}
                             iconStrokeWidth={2}
-                            iconClassName="size-3.5"
                             onClick={handleCopy}
                         />
                         <IconButton
@@ -157,8 +156,7 @@ export function CssStylesInput({ styles, onChange }: CssStylesInputProps) {
                             size="icon-sm"
                             label="Paste styles"
                             icon={Task01Icon}
-                            iconStrokeWidth={2}
-                            iconClassName="size-3.5"
+                            iconStrokeWidth={1.75}
                             onClick={handlePaste}
                         />
                     </ButtonGroup>

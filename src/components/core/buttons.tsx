@@ -100,12 +100,14 @@ export const IconButton = memo(function IconButton({
 });
 
 interface IconDropdownButtonProps extends Omit<
-    BaseIconButtonProps,
-    "accelerator" | "text" | "textClassName"
+    IconButtonProps,
+    "accelerator" | "text" | "textClassName" | "onClick"
 > {
     children?: React.ReactNode;
 }
 export const IconDropdownButton = memo(function IconDropdownButton({
+    type,
+    size,
     label,
     icon,
     iconStrokeWidth,
@@ -117,6 +119,8 @@ export const IconDropdownButton = memo(function IconDropdownButton({
             <DropdownMenuTrigger asChild>
                 <div>
                     <IconButton
+                        type={type}
+                        size={size}
                         label={label}
                         icon={icon}
                         iconStrokeWidth={iconStrokeWidth ?? 2}
