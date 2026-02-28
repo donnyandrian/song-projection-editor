@@ -1,5 +1,5 @@
 import { Tabs } from "@/components/ui/tabs";
-import { AddMasterButton, DeleteMasterButton, MasterTabs } from "@/components/master/queue";
+import { AddMasterButton, DeleteMasterButton, ImportExportButton, MasterTabs } from "@/components/master/queue";
 import { MasterContents } from "@/components/master/content";
 import { useMasterStore } from "@/stores/master.store";
 import { useShallow } from "zustand/react/shallow";
@@ -101,6 +101,7 @@ export function Editor() {
                     <h3 className="text-muted-foreground text-sm font-medium select-none">Queue</h3>
                     <MasterTabs />
                     <ButtonGroup>
+                        <ImportExportButton />
                         <ButtonGroup>
                             <AddMasterButton />
                         </ButtonGroup>
