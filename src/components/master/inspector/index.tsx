@@ -47,7 +47,7 @@ export function Inspector() {
     return (
         <div className="bg-background flex h-full flex-col overflow-hidden">
             <div className="border-b px-4 py-3">
-                <h3 className="text-muted-foreground text-sm font-medium">Inspector</h3>
+                <h3 className="text-muted-foreground text-sm font-medium select-none">Inspector</h3>
             </div>
 
             <Tabs defaultValue="content" className="flex flex-1 flex-col overflow-hidden">

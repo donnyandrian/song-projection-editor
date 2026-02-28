@@ -21,7 +21,7 @@ export function Editor() {
                 className="flex flex-1 flex-col overflow-hidden pt-2"
             >
                 <div className="flex w-full flex-row items-center gap-4 px-4">
-                    <h3 className="text-muted-foreground text-sm font-medium">Queue</h3>
+                    <h3 className="text-muted-foreground text-sm font-medium select-none">Queue</h3>
                     <MasterTabs />
                     <ButtonGroup>
                         <ButtonGroup>

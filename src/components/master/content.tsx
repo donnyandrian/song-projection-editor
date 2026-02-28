@@ -47,9 +47,9 @@ function MasterContent({ id, contents, backgrounds, transitions }: MasterContent
             >
                 <div className="relative flex h-full w-auto flex-col overflow-x-scroll!">
                     <div className="flex min-h-17 flex-1 flex-col items-start gap-1 py-2">
-                        <span className="text-muted-foreground sticky left-0 px-4 text-xs">
+                        <h4 className="text-muted-foreground sticky left-0 px-4 text-xs select-none">
                             Content
-                        </span>
+                        </h4>
                         <NodeContainer>
                             {contents.map((c, i) => (
                                 <Node key={i} index={i} {...c} />
@@ -58,9 +58,9 @@ function MasterContent({ id, contents, backgrounds, transitions }: MasterContent
                     </div>
                     <Separator className="sticky left-0 h-px" />
                     <div className="flex h-17 min-h-17 flex-col items-start gap-1 py-2">
-                        <span className="text-muted-foreground sticky left-0 px-4 text-xs">
+                        <h4 className="text-muted-foreground sticky left-0 px-4 text-xs select-none">
                             Background
-                        </span>
+                        </h4>
                         <NodeContainer>
                             {backgrounds.map((bg, i) => (
                                 <Node key={i} index={i} type="background" label={bg} />
@@ -69,9 +69,9 @@ function MasterContent({ id, contents, backgrounds, transitions }: MasterContent
                     </div>
                     <Separator className="sticky left-0 h-px" />
                     <div className="flex h-17 min-h-17 flex-col items-start gap-1 py-2">
-                        <span className="text-muted-foreground sticky left-0 px-4 text-xs">
+                        <h4 className="text-muted-foreground sticky left-0 px-4 text-xs select-none">
                             Transition
-                        </span>
+                        </h4>
                         <NodeContainer>
                             {transitions.map((t, i) => (
                                 <Node key={i} index={i} type="transition" label={t} />
