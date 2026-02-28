@@ -31,31 +31,46 @@ export const GlobalKeyboardProvider = ({ children }: { children: React.ReactNode
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            if (document.body.dataset["scrollLocked"] === "1") return;
+            if (e.repeat) return;
+
             const active = document.activeElement as HTMLElement | null;
             const focusedTag = active?.tagName ?? "";
             const isTextField =
                 focusedTag === "INPUT" ||
                 focusedTag === "TEXTAREA" ||
                 active?.getAttribute("contenteditable") === "true";
-
-            if (document.body.dataset["scrollLocked"] === "1") return;
             if (isTextField) return; // Allow native behavior
 
-            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            // Check if the focused element is a shadcn/Radix/Base component
+            // that needs to manage its own arrow key navigation
+            const role = active?.getAttribute("role") ?? "";
+            const isInteractiveRole = [
+                "tab",
+                "radio",
+                "slider",
+                "menuitem",
+                "menuitemcheckbox",
+                "menuitemradio",
+                "option",
+                "combobox",
+                "switch",
+            ].includes(role);
+            if (isInteractiveRole) return;
 
-            if (e.repeat) return;
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
 
             switch (e.code) {
                 case "KeyA": {
                     e.preventDefault();
                     if (e.shiftKey) shortcuts.current["Shift+A"]?.();
                     else shortcuts.current["A"]?.();
-                    
+
                     break;
                 }
                 case "ArrowLeft": {
                     if (e.shiftKey) return;
-                    
+
                     e.preventDefault();
                     shortcuts.current["ArrowLeft"]?.();
 
@@ -63,7 +78,7 @@ export const GlobalKeyboardProvider = ({ children }: { children: React.ReactNode
                 }
                 case "ArrowRight": {
                     if (e.shiftKey) return;
-                    
+
                     e.preventDefault();
                     shortcuts.current["ArrowRight"]?.();
 
@@ -87,7 +102,7 @@ export const GlobalKeyboardProvider = ({ children }: { children: React.ReactNode
                     e.preventDefault();
                     if (e.shiftKey) shortcuts.current["Shift+Delete"]?.();
                     else shortcuts.current["Delete"]?.();
-                    
+
                     break;
                 }
                 default:
