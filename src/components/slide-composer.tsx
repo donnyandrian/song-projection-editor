@@ -2,6 +2,7 @@ import { ContentResizer } from "@/components/core/content-resizer";
 import { RemapperContainer } from "@/components/core/screen-remapper";
 import { VideoPlayer } from "@/components/core/video-player";
 import { Backcover } from "@/components/viewer";
+import { useResolveAsset } from "@/hooks/use-resolve-asset";
 import { useRetain } from "@/hooks/use-retain";
 import { isTransparent } from "@/lib/background";
 import { cn } from "@/lib/utils";
@@ -129,13 +130,7 @@ const SlideComposerContent = memo(
             case "Video":
                 return <VideoPlayer src={content.content} autoPlay loop muted />;
             case "Image":
-                return (
-                    <img
-                        src={content.content}
-                        alt="Content Image"
-                        className="size-full object-contain"
-                    />
-                );
+                return <ImageContent src={content.content} />;
             case "Text":
                 return (
                     <span
@@ -156,3 +151,9 @@ const SlideComposerContent = memo(
         return JSON.stringify(prev.content) === JSON.stringify(next.content);
     },
 );
+
+const ImageContent = memo(function ImageContent({ src }: { src: string }) {
+    const resolvedSrc = useResolveAsset(src);
+
+    return <img src={resolvedSrc} alt="Content Image" className="size-full object-contain" />;
+});

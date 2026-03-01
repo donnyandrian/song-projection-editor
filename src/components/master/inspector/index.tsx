@@ -20,6 +20,7 @@ import {
 import type { ProjectionItem, ProjectionTransition, ProjectionMaster } from "@/types";
 import { TextStyleField } from "@/components/master/inspector/text";
 import type { HandleUpdate, InputChanged } from "@/types/inspector";
+import { MediaInput, type ApplyScope } from "@/components/master/media-input";
 
 export function Inspector() {
     const activeProjectionIndex = useMasterStore((s) => s.activeProjectionIndex);
@@ -43,6 +44,48 @@ export function Inspector() {
     };
 
     const itemKey = `${activeProjectionIndex}-${activeContentIndex}`;
+
+    const applyBatchUpdate = (
+        assetId: string,
+        scope: ApplyScope,
+        sourceArea: "content" | "background",
+    ) => {
+        if (scope === "single") {
+            handleUpdate((old) => ({
+                ...old,
+                ...(sourceArea === "content" ? { content: assetId } : { bg: assetId }),
+            }));
+            return;
+        }
+
+        const store = useProjectionStore.getState();
+        const newProjections = store.projections.map((proj) => {
+            const newContents = proj.contents.map((item) => {
+                const newItem = { ...item };
+
+                if (scope === "area") {
+                    if (sourceArea === "background") {
+                        newItem.bg = assetId;
+                    } else if (
+                        sourceArea === "content" &&
+                        (newItem.type === "Image" || newItem.type === "Video")
+                    ) {
+                        newItem.content = assetId;
+                    }
+                } else if (scope === "all") {
+                    newItem.bg = assetId;
+                    if (newItem.type === "Image" || newItem.type === "Video") {
+                        newItem.content = assetId;
+                    }
+                }
+                return newItem;
+            });
+
+            return { ...proj, contents: newContents };
+        });
+
+        store.setProjectionsWithIds(newProjections);
+    };
 
     return (
         <div className="bg-background flex h-full flex-col overflow-hidden">
@@ -70,11 +113,13 @@ export function Inspector() {
                         itemKey={itemKey}
                         activeItem={activeItem}
                         handleUpdate={handleUpdate}
+                        applyBatchUpdate={applyBatchUpdate}
                     />
                     <InspectorBackgroundTab
                         activeItem={activeItem}
                         handleUpdate={handleUpdate}
                         activeProjection={activeProjection}
+                        applyBatchUpdate={applyBatchUpdate}
                     />
                     <InspectorTransitionTab activeItem={activeItem} handleUpdate={handleUpdate} />
                 </div>
@@ -89,8 +134,18 @@ interface TabProps {
 }
 interface ContentTabProps extends TabProps {
     itemKey: string;
+    applyBatchUpdate: (
+        assetId: string,
+        scope: ApplyScope,
+        sourceArea: "content" | "background",
+    ) => void;
 }
-function InspectorContentTab({ itemKey, activeItem, handleUpdate }: ContentTabProps) {
+function InspectorContentTab({
+    itemKey,
+    activeItem,
+    handleUpdate,
+    applyBatchUpdate,
+}: ContentTabProps) {
     const typeChanged = (val: "Text" | "Image" | "Video") => {
         handleUpdate((old) => {
             // Extract the base fields shared across all primitive/text items
@@ -118,11 +173,11 @@ function InspectorContentTab({ itemKey, activeItem, handleUpdate }: ContentTabPr
         handleUpdate((old) => ({ ...old, group: e.target.value }));
     };
 
-    const contentChanged: InputChanged = (e) => {
+    const contentChanged = (val: string) => {
         handleUpdate((old) => {
             // Discard Component edits as string, fallback for Primitives and Text
             if (old.type === "Component") return old;
-            return { ...old, content: e.target.value };
+            return { ...old, content: val };
         });
     };
 
@@ -167,13 +222,26 @@ function InspectorContentTab({ itemKey, activeItem, handleUpdate }: ContentTabPr
 
                 <Field>
                     <FieldLabel>Content Resource</FieldLabel>
-                    <Input
-                        value={typeof activeItem.content === "string" ? activeItem.content : ""}
-                        onChange={contentChanged}
-                        placeholder={
-                            activeItem.type === "Text" ? "Enter text..." : "Filename or URL"
-                        }
-                    />
+                    {activeItem.type === "Text" || activeItem.type === "Component" ? (
+                        <Input
+                            value={typeof activeItem.content === "string" ? activeItem.content : ""}
+                            onChange={(e) => contentChanged(e.target.value)}
+                            placeholder="Enter text..."
+                        />
+                    ) : (
+                        <MediaInput
+                            value={typeof activeItem.content === "string" ? activeItem.content : ""}
+                            onChange={contentChanged}
+                            onUploadApply={(assetId, scope) =>
+                                applyBatchUpdate(assetId, scope, "content")
+                            }
+                            areaName="content"
+                            accept={
+                                activeItem.type === "Image" ? "image/*" : "video/mp4, video/webm"
+                            }
+                            placeholder="Filename, URL, or Select Upload"
+                        />
+                    )}
                 </Field>
 
                 {activeItem.type === "Text" && (
@@ -190,17 +258,20 @@ function InspectorContentTab({ itemKey, activeItem, handleUpdate }: ContentTabPr
 
 interface BackgroundTabProps extends TabProps {
     activeProjection?: ProjectionMaster;
+    applyBatchUpdate: (
+        assetId: string,
+        scope: ApplyScope,
+        sourceArea: "content" | "background",
+    ) => void;
 }
 function InspectorBackgroundTab({
     activeItem,
     handleUpdate,
     activeProjection,
+    applyBatchUpdate,
 }: BackgroundTabProps) {
-    const backgroundChanged: InputChanged = (e) => {
-        handleUpdate((old) => ({
-            ...old,
-            bg: e.target.value || undefined,
-        }));
+    const backgroundChanged = (val: string) => {
+        handleUpdate((old) => ({ ...old, bg: val || undefined }));
     };
 
     return (
@@ -208,9 +279,14 @@ function InspectorBackgroundTab({
             <FieldGroup>
                 <Field>
                     <FieldLabel>Background Source</FieldLabel>
-                    <Input
+                    <MediaInput
                         value={activeItem.bg ?? ""}
                         onChange={backgroundChanged}
+                        onUploadApply={(assetId, scope) =>
+                            applyBatchUpdate(assetId, scope, "background")
+                        }
+                        areaName="background"
+                        accept="video/mp4, video/webm"
                         placeholder={
                             activeProjection?.bg
                                 ? `Inheriting: ${activeProjection.bg}`

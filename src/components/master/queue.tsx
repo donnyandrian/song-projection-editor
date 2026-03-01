@@ -5,8 +5,6 @@ import { AlertDialog, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGlobalKeyboard } from "@/context/GlobalKeyboardContext";
-import { downloadBlob, downloadJson, importJson } from "@/lib/utils";
-import { ImportSchema } from "@/schemas/master";
 import { useMasterStore } from "@/stores/master.store";
 import { useProjectionStore } from "@/stores/projection.store";
 import {
@@ -20,9 +18,10 @@ import {
     KeyframesDoubleIcon,
     Layers01Icon,
 } from "@hugeicons-pro/core-stroke-rounded";
-import { useEffect, useMemo, useState } from "react";
-import { zipSync, strToU8 } from "fflate";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { importProjectionsZip } from "@/lib/import";
+import { exportProjections } from "@/lib/export";
 
 export function MasterTabs() {
     const projections = useProjectionStore((s) => s.projections);
@@ -197,29 +196,35 @@ export function ImportExportButton() {
     const hasActiveQueue = useMasterStore((s) => s.activeProjectionIndex >= 0);
     const hasProjections = useProjectionStore((s) => s.projections.length > 0);
 
-    const handleImport = () => {
-        importJson((data) => {
-            try {
-                // Safely validate and strip internal IDs or excess keys
-                const parsed = ImportSchema.parse(data);
-                const store = useProjectionStore.getState();
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-                if (Array.isArray(parsed)) {
-                    parsed.forEach((p) => store.addProjection(p));
-                } else {
-                    store.addProjection(parsed);
-                }
-            } catch (err) {
-                console.error("Invalid projection data format", err);
-                alert("Invalid projection data format. Import failed.");
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            if (file.name.endsWith(".zip")) {
+                await importProjectionsZip(file);
+            } else {
+                alert("Please select a valid .zip export file.");
             }
-        });
+        } catch (err) {
+            console.error("Import failed", err);
+            alert("Failed to import. The file might be corrupted or in an older format.");
+        }
+
+        // Reset the input so the user can import the same file again if needed
+        e.target.value = "";
     };
 
     const handleExportAll = () => {
         const projections = useProjectionStore.getState().projections;
         if (projections.length === 0) return;
-        downloadJson(projections, "projections-all.json");
+        void exportProjections(projections, "projections-all.zip", false);
     };
 
     const handleExportActive = () => {
@@ -233,33 +238,19 @@ export function ImportExportButton() {
 
         // Basic sanitization for the filename
         const safeTitle = activeProjection.title.replace(/[^a-z0-9]/gi, "_").toLowerCase();
-        downloadJson(activeProjection, `projection-${safeTitle}.json`);
+        void exportProjections([activeProjection], `projection-${safeTitle}.zip`, false);
     };
 
     const handleExportSeparate = () => {
         const projections = useProjectionStore.getState().projections;
         if (projections.length === 0) return;
 
-        // Prepare files for fflate
-        const files: Record<string, Uint8Array> = {};
-
-        projections.forEach((p, i) => {
-            const safeTitle = p.title.replace(/[^a-z0-9]/gi, "_").toLowerCase();
-            // Prefixing with index (i + 1) to guarantee filename uniqueness if multiple projections share a title
-            const filename = `projection-${i + 1}-${safeTitle}.json`;
-            files[filename] = strToU8(JSON.stringify(p, null, 2));
-        });
-
-        // Pack them synchronously
-        const zipped = zipSync(files) as unknown as BlobPart;
-        const blob = new Blob([zipped], { type: "application/zip" });
-
-        downloadBlob(blob, "projections-separate.zip");
+        void exportProjections(projections, "projections-separate.zip", true);
     };
 
     const [register, unregister] = useGlobalKeyboard();
     useEffect(() => {
-        register("Shift+I", handleImport);
+        register("Shift+I", handleImportClick);
         register("Shift+E", handleExportAll);
         register("Shift+P", handleExportActive);
 
@@ -271,50 +262,59 @@ export function ImportExportButton() {
     }, [register, unregister]);
 
     return (
-        <IconDropdownButton
-            size="icon-sm"
-            label="Import/Export"
-            icon={File02Icon}
-            iconStrokeWidth={1.75}
-        >
-            <IconDropdownMenuItem
-                label={"Import JSON"}
-                text="Import Projections"
-                icon={FileImportIcon}
+        <>
+            <input
+                type="file"
+                accept=".zip"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+            />
+            <IconDropdownButton
+                size="icon-sm"
+                label="Import/Export"
+                icon={File02Icon}
                 iconStrokeWidth={1.75}
-                accelerator={{ key: "I", shift: true }}
-                onSelect={handleImport}
-            />{" "}
-            {hasProjections && (
-                <>
-                    <DropdownMenuSeparator />
-                    <IconDropdownMenuItem
-                        label={"Export All"}
-                        text="Export All (Single File)"
-                        icon={FileExportIcon}
-                        iconStrokeWidth={1.75}
-                        accelerator={{ key: "E", shift: true }}
-                        onSelect={handleExportAll}
-                    />
-                    <IconDropdownMenuItem
-                        label={"Export Separate"}
-                        text="Export Separate Files"
-                        icon={Files01Icon}
-                        iconStrokeWidth={1.75}
-                        onSelect={handleExportSeparate}
-                    />
-                </>
-            )}
-            {hasActiveQueue && (
+            >
                 <IconDropdownMenuItem
-                    label={"Export Active"}
-                    text="Export Active Projection"
-                    icon={FileViewIcon}
+                    label={"Import ZIP"}
+                    text="Import Projections"
+                    icon={FileImportIcon}
                     iconStrokeWidth={1.75}
-                    accelerator={{ key: "P", shift: true }}
-                    onSelect={handleExportActive}
+                    accelerator={{ key: "I", shift: true }}
+                    onSelect={handleImportClick}
                 />
-            )}
-        </IconDropdownButton>
+                {hasProjections && (
+                    <>
+                        <DropdownMenuSeparator />
+                        <IconDropdownMenuItem
+                            label={"Export All"}
+                            text="Export All (Single ZIP)"
+                            icon={FileExportIcon}
+                            iconStrokeWidth={1.75}
+                            accelerator={{ key: "E", shift: true }}
+                            onSelect={handleExportAll}
+                        />
+                        <IconDropdownMenuItem
+                            label={"Export Separate"}
+                            text="Export Separate Files"
+                            icon={Files01Icon}
+                            iconStrokeWidth={1.75}
+                            onSelect={handleExportSeparate}
+                        />
+                    </>
+                )}
+                {hasActiveQueue && (
+                    <IconDropdownMenuItem
+                        label={"Export Active"}
+                        text="Export Active Projection"
+                        icon={FileViewIcon}
+                        iconStrokeWidth={1.75}
+                        accelerator={{ key: "P", shift: true }}
+                        onSelect={handleExportActive}
+                    />
+                )}
+            </IconDropdownButton>
+        </>
     );
 }

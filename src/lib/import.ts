@@ -1,0 +1,45 @@
+import { unzipSync, strFromU8 } from "fflate";
+import { useAssetStore } from "@/stores/asset.store";
+import { useProjectionStore } from "@/stores/projection.store";
+import type { ProjectionMasterWithId } from "@/types";
+
+export async function importProjectionsZip(zipFile: File) {
+    const arrayBuffer = await zipFile.arrayBuffer();
+    const unzipped = unzipSync(new Uint8Array(arrayBuffer));
+
+    const addAsset = useAssetStore.getState().addAsset;
+
+    // Restore Assets first
+    for (const [path, uint8Array] of Object.entries(unzipped)) {
+        if (path.startsWith("assets/") && uint8Array.length > 0) {
+            const safeName = path.replace("assets/", "");
+            const originalId = `asset://${safeName}`;
+            let mime = "application/octet-stream";
+
+            if (safeName.endsWith(".mp4")) mime = "video/mp4";
+            else if (safeName.endsWith(".webm")) mime = "video/webm";
+            else if (/\.(jpg|jpeg|png|gif|webp)$/i.exec(safeName))
+                mime = `image/${safeName.split(".").pop()}`;
+
+            const file = new File([uint8Array as unknown as BlobPart], safeName, { type: mime });
+            addAsset(file, originalId);
+        }
+    }
+
+    const importedProjections: ProjectionMasterWithId[] = [];
+
+    // Read all JSON files directly without modifying references
+    for (const [path, uint8Array] of Object.entries(unzipped)) {
+        if (path.endsWith(".json") && !path.startsWith("assets/")) {
+            const data = JSON.parse(strFromU8(uint8Array));
+            const projectionsData = Array.isArray(data) ? data : [data];
+            importedProjections.push(...(projectionsData as ProjectionMasterWithId[]));
+        }
+    }
+
+    if (importedProjections.length === 0) throw new Error("Missing JSON files");
+
+    // Inject raw JSON straight into Store
+    const store = useProjectionStore.getState();
+    importedProjections.forEach((p) => store.addProjection(p));
+}
