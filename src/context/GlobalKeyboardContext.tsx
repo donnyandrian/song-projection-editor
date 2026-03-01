@@ -68,6 +68,27 @@ export const GlobalKeyboardProvider = ({ children }: { children: React.ReactNode
 
                     break;
                 }
+                case "KeyE": {
+                    if (!e.shiftKey) return;
+                    e.preventDefault();
+                    shortcuts.current["Shift+E"]?.();
+
+                    break;
+                }
+                case "KeyI": {
+                    if (!e.shiftKey) return;
+                    e.preventDefault();
+                    shortcuts.current["Shift+I"]?.();
+
+                    break;
+                }
+                case "KeyP": {
+                    if (!e.shiftKey) return;
+                    e.preventDefault();
+                    shortcuts.current["Shift+P"]?.();
+
+                    break;
+                }
                 case "ArrowLeft": {
                     if (e.shiftKey) return;
 

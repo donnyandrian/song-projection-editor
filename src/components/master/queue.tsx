@@ -12,17 +12,13 @@ import { useProjectionStore } from "@/stores/projection.store";
 import {
     Add01Icon,
     Delete03Icon,
-    Download01Icon,
-    File01Icon,
     File02Icon,
     FileExportIcon,
     FileImportIcon,
     Files01Icon,
     FileViewIcon,
-    Folder01Icon,
     KeyframesDoubleIcon,
     Layers01Icon,
-    Upload01Icon,
 } from "@hugeicons-pro/core-stroke-rounded";
 import { useEffect, useMemo, useState } from "react";
 import { zipSync, strToU8 } from "fflate";
@@ -222,14 +218,17 @@ export function ImportExportButton() {
 
     const handleExportAll = () => {
         const projections = useProjectionStore.getState().projections;
+        if (projections.length === 0) return;
         downloadJson(projections, "projections-all.json");
     };
 
     const handleExportActive = () => {
-        const masterStore = useMasterStore.getState();
-        const projectionStore = useProjectionStore.getState();
+        const activeProjectionIndex = useMasterStore.getState().activeProjectionIndex;
+        const projections = useProjectionStore.getState().projections;
 
-        const activeProjection = projectionStore.projections[masterStore.activeProjectionIndex];
+        if (activeProjectionIndex < 0) return;
+
+        const activeProjection = projections[activeProjectionIndex];
         if (!activeProjection) return;
 
         // Basic sanitization for the filename
@@ -258,6 +257,19 @@ export function ImportExportButton() {
         downloadBlob(blob, "projections-separate.zip");
     };
 
+    const [register, unregister] = useGlobalKeyboard();
+    useEffect(() => {
+        register("Shift+I", handleImport);
+        register("Shift+E", handleExportAll);
+        register("Shift+P", handleExportActive);
+
+        return () => {
+            unregister("Shift+I");
+            unregister("Shift+E");
+            unregister("Shift+P");
+        };
+    }, [register, unregister]);
+
     return (
         <IconDropdownButton
             size="icon-sm"
@@ -270,15 +282,18 @@ export function ImportExportButton() {
                 text="Import Projections"
                 icon={FileImportIcon}
                 iconStrokeWidth={1.75}
+                accelerator={{ key: "I", shift: true }}
                 onSelect={handleImport}
-            /> <DropdownMenuSeparator />
+            />{" "}
             {hasProjections && (
                 <>
+                    <DropdownMenuSeparator />
                     <IconDropdownMenuItem
                         label={"Export All"}
                         text="Export All (Single File)"
                         icon={FileExportIcon}
                         iconStrokeWidth={1.75}
+                        accelerator={{ key: "E", shift: true }}
                         onSelect={handleExportAll}
                     />
                     <IconDropdownMenuItem
@@ -296,6 +311,7 @@ export function ImportExportButton() {
                     text="Export Active Projection"
                     icon={FileViewIcon}
                     iconStrokeWidth={1.75}
+                    accelerator={{ key: "P", shift: true }}
                     onSelect={handleExportActive}
                 />
             )}

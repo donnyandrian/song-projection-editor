@@ -101,7 +101,9 @@ export function Editor() {
                     <h3 className="text-muted-foreground text-sm font-medium select-none">Queue</h3>
                     <MasterTabs />
                     <ButtonGroup>
-                        <ImportExportButton />
+                        <ButtonGroup>
+                            <ImportExportButton />
+                        </ButtonGroup>
                         <ButtonGroup>
                             <AddMasterButton />
                         </ButtonGroup>
