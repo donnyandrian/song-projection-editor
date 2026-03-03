@@ -92,7 +92,7 @@ export function CssStylesInput({ styles, onChange }: CssStylesInputProps) {
 
                     return (
                         <div key={style.id} className="flex items-center gap-2 last-of-type:mb-2">
-                            <ButtonGroup>
+                            <ButtonGroup className="w-full">
                                 <Combobox
                                     items={CSS_PROPERTIES}
                                     value={comboboxValue}

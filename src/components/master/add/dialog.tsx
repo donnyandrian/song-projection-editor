@@ -21,10 +21,31 @@ import { useMasterStore } from "@/stores/master.store";
 import type { ProjectionMaster, ProjectionTransition } from "@/types";
 import { useCallback, useMemo, useState } from "react";
 import { CssStylesInput, type StyleItem } from "@/components/master/shared/css-styles-input";
+import { MediaInput } from "@/components/master/media-input";
+import * as mi from "@/const/media-input";
 
 interface DialogProps {
     setOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
 }
+
+function FormBackgroundMediaInput({ defaultValue = "" }) {
+    const [value, setValue] = useState(defaultValue);
+
+    return (
+        <>
+            <MediaInput
+                value={value}
+                onChange={setValue}
+                onUploadApply={(id) => setValue(id)}
+                areaName={mi.BACKGROUND_AREANAME}
+                accept={mi.BACKGROUND_ACCEPT}
+                placeholder="background_1080.webm"
+            />
+            <input type="hidden" name="background" value={value} required />
+        </>
+    );
+}
+
 export function AddMasterQueue({ setOpenDialog }: DialogProps) {
     const handleSubmit = useCallback(
         (ev: React.SubmitEvent<HTMLFormElement>) => {
@@ -71,16 +92,10 @@ export function AddMasterQueue({ setOpenDialog }: DialogProps) {
                         />
                     </Field>
                     <Field>
-                        <FieldLabel className="gap-0.5" htmlFor="queue-background">
+                        <FieldLabel className="gap-0.5">
                             Background <span className="text-destructive">*</span>
                         </FieldLabel>
-                        <Input
-                            id="queue-background"
-                            name="background"
-                            type="text"
-                            required
-                            placeholder="background_1080.webm"
-                        />
+                        <FormBackgroundMediaInput />
                     </Field>
                     <Field>
                         <FieldLabel className="gap-0.5">
@@ -99,10 +114,8 @@ export function AddMasterQueue({ setOpenDialog }: DialogProps) {
                         </Select>
                     </Field>
                 </FieldGroup>
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button variant={"outline"}>Cancel</Button>
-                    </DialogClose>
+                <DialogFooter className="-mb-6">
+                    <DialogClose render={<Button variant={"outline"}>Cancel</Button>} />
                     <Button type="submit">Add</Button>
                 </DialogFooter>
             </form>
@@ -123,8 +136,10 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
                 setFields(<TextInput />);
                 break;
             case "Image":
+                setFields(<ImageInput />);
+                break;
             case "Video":
-                setFields(<ImageVideoInput />);
+                setFields(<VideoInput />);
                 break;
             default:
                 setFields(null);
@@ -240,16 +255,8 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
                     <FieldSeparator />
                     {fields}
                     <Field>
-                        <FieldLabel className="gap-0.5" htmlFor="content-background">
-                            Background
-                        </FieldLabel>
-                        <Input
-                            id="content-background"
-                            name="background"
-                            type="text"
-                            placeholder="background_1080.webm"
-                            defaultValue={currentProjection?.bg}
-                        />
+                        <FieldLabel className="gap-0.5">Background</FieldLabel>
+                        <FormBackgroundMediaInput defaultValue={currentProjection?.bg || ""} />
                     </Field>
                     <Field>
                         <FieldLabel className="gap-0.5">Transition</FieldLabel>
@@ -266,10 +273,8 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
                         </Select>
                     </Field>
                 </FieldGroup>
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button variant={"outline"}>Cancel</Button>
-                    </DialogClose>
+                <DialogFooter className="-mb-6">
+                    <DialogClose render={<Button variant={"outline"}>Cancel</Button>} />
                     <Button type="submit">Add</Button>
                 </DialogFooter>
             </form>
@@ -300,18 +305,41 @@ function TextInput() {
     );
 }
 
-function ImageVideoInput() {
+function ImageInput() {
+    const [value, setValue] = useState("");
+
     return (
         <Field>
-            <FieldLabel className="gap-0.5" htmlFor="content-content">
+            <FieldLabel className="gap-0.5">
                 Content <span className="text-destructive">*</span>
             </FieldLabel>
-            <Input
-                id="content-content"
-                name="content"
-                type="text"
-                required
-                placeholder="foreground_1080.webp (or .webm)"
+            <MediaInput
+                value={value}
+                onChange={setValue}
+                onUploadApply={(id) => setValue(id)}
+                areaName={mi.CONTENT_AREANAME}
+                accept={mi.IMAGE_ACCEPT}
+                placeholder="foreground_1080.webp"
+            />
+        </Field>
+    );
+}
+
+function VideoInput() {
+    const [value, setValue] = useState("");
+
+    return (
+        <Field>
+            <FieldLabel className="gap-0.5">
+                Content <span className="text-destructive">*</span>
+            </FieldLabel>
+            <MediaInput
+                value={value}
+                onChange={setValue}
+                onUploadApply={(id) => setValue(id)}
+                areaName={mi.CONTENT_AREANAME}
+                accept={mi.VIDEO_ACCEPT}
+                placeholder="foreground_1080.webm"
             />
         </Field>
     );
