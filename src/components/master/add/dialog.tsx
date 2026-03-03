@@ -28,11 +28,18 @@ interface DialogProps {
     setOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-function FormBackgroundMediaInput({ defaultValue = "" }) {
+interface FormBackgroundMediaInputProps {
+    defaultValue?: string;
+    required?: boolean;
+}
+function FormBackgroundMediaInput({
+    defaultValue = "",
+    required = false,
+}: FormBackgroundMediaInputProps) {
     const [value, setValue] = useState(defaultValue);
 
     return (
-        <>
+        <div className="relative flex w-full flex-col">
             <MediaInput
                 value={value}
                 onChange={setValue}
@@ -41,8 +48,18 @@ function FormBackgroundMediaInput({ defaultValue = "" }) {
                 accept={mi.BACKGROUND_ACCEPT}
                 placeholder="background_1080.webm"
             />
-            <input type="hidden" name="background" value={value} required />
-        </>
+            <input
+                type="text"
+                name="background"
+                value={value}
+                onChange={() => {
+                    /* no-op */
+                }}
+                required={required}
+                className="pointer-events-none absolute bottom-0 left-1/2 -z-10 h-px w-px opacity-0"
+                tabIndex={-1}
+            />
+        </div>
     );
 }
 
@@ -95,7 +112,7 @@ export function AddMasterQueue({ setOpenDialog }: DialogProps) {
                         <FieldLabel className="gap-0.5">
                             Background <span className="text-destructive">*</span>
                         </FieldLabel>
-                        <FormBackgroundMediaInput />
+                        <FormBackgroundMediaInput required />
                     </Field>
                     <Field>
                         <FieldLabel className="gap-0.5">
@@ -313,14 +330,27 @@ function ImageInput() {
             <FieldLabel className="gap-0.5">
                 Content <span className="text-destructive">*</span>
             </FieldLabel>
-            <MediaInput
-                value={value}
-                onChange={setValue}
-                onUploadApply={(id) => setValue(id)}
-                areaName={mi.CONTENT_AREANAME}
-                accept={mi.IMAGE_ACCEPT}
-                placeholder="foreground_1080.webp"
-            />
+            <div className="relative flex w-full flex-col">
+                <MediaInput
+                    value={value}
+                    onChange={setValue}
+                    onUploadApply={(id) => setValue(id)}
+                    areaName={mi.CONTENT_AREANAME}
+                    accept={mi.IMAGE_ACCEPT}
+                    placeholder="foreground_1080.webp"
+                />
+                <input
+                    type="text"
+                    name="content"
+                    value={value}
+                    onChange={() => {
+                        /* no-op */
+                    }}
+                    required
+                    className="pointer-events-none absolute bottom-0 left-1/2 -z-10 h-px w-px opacity-0"
+                    tabIndex={-1}
+                />
+            </div>
         </Field>
     );
 }
@@ -333,14 +363,27 @@ function VideoInput() {
             <FieldLabel className="gap-0.5">
                 Content <span className="text-destructive">*</span>
             </FieldLabel>
-            <MediaInput
-                value={value}
-                onChange={setValue}
-                onUploadApply={(id) => setValue(id)}
-                areaName={mi.CONTENT_AREANAME}
-                accept={mi.VIDEO_ACCEPT}
-                placeholder="foreground_1080.webm"
-            />
+            <div className="relative flex w-full flex-col">
+                <MediaInput
+                    value={value}
+                    onChange={setValue}
+                    onUploadApply={(id) => setValue(id)}
+                    areaName={mi.CONTENT_AREANAME}
+                    accept={mi.VIDEO_ACCEPT}
+                    placeholder="foreground_1080.webm"
+                />
+                <input
+                    type="text"
+                    name="content"
+                    value={value}
+                    onChange={() => {
+                        /* no-op */
+                    }}
+                    required
+                    className="pointer-events-none absolute bottom-0 left-1/2 -z-10 h-px w-px opacity-0"
+                    tabIndex={-1}
+                />
+            </div>
         </Field>
     );
 }

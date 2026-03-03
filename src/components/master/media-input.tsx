@@ -114,10 +114,10 @@ export function MediaInput({
                     <Combobox
                         items={options}
                         value={comboboxValue}
-                        onValueChange={(e) => e?.value && onChange(e.value)}
+                        onValueChange={(e) => onChange(e?.value ?? "")}
                         autoHighlight
                     >
-                        <ComboboxInput placeholder={placeholder} className="flex-1" />
+                        <ComboboxInput placeholder={placeholder} className="flex-1" showClear />
                         <ComboboxContent className="w-60">
                             <ComboboxEmpty>No match found.</ComboboxEmpty>
                             <ComboboxList>
