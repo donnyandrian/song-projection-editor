@@ -21,14 +21,16 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Upload01Icon } from "@hugeicons-pro/core-stroke-rounded";
 import { useAssetStore } from "@/stores/asset.store";
+import { getFileNameFromId } from "@/lib/import";
 
 export type ApplyScope = "single" | "area" | "all";
+export type AreaName = "content" | "background";
 
 interface MediaInputProps {
     value: string;
     onChange: (val: string) => void;
     onUploadApply: (assetId: string, scope: ApplyScope) => void;
-    areaName: "content" | "background";
+    areaName: AreaName;
     accept?: string;
     placeholder?: string;
 }
@@ -51,22 +53,42 @@ export function MediaInput({
 
     // Format stored assets as suggestions for the Combobox
     const options = useMemo(() => {
-        return Object.values(assets).map((a) => ({
-            value: a.id,
-            label: a.file.name,
-        }));
-    }, [assets]);
+        return Object.values(assets)
+            .filter((a) => {
+                if (!accept) return true;
+                const acceptList = accept.split(",").map((s) => s.trim().toLowerCase());
+                return acceptList.some((acc) => {
+                    if (acc.startsWith(".")) return a.file.name.toLowerCase().endsWith(acc);
+                    if (acc.endsWith("/*")) return a.file.type.startsWith(acc.split("/")[0] + "/");
+                    return a.file.type === acc;
+                });
+            })
+            .map((a) => {
+                const v = a.id;
+                return { value: v, label: getFileNameFromId(v) };
+            });
+    }, [accept, assets]);
 
     const comboboxValue = useMemo(() => {
-        if (!value) return null;
+        if (!value || !(value in assets)) return null;
 
-        const a = assets[value];
-        return { value: a.id, label: a.file.name };
+        const v = assets[value].id;
+        return { value: v, label: getFileNameFromId(v) };
     }, [assets, value]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
+
+        // Automatically replace if the filename is exactly the same
+        const existingAsset = Object.values(assets).find((a) => a.file.name === file.name);
+
+        if (existingAsset) {
+            addAsset(file, existingAsset.id);
+            onChange(existingAsset.id);
+            e.target.value = "";
+            return;
+        }
 
         const id = addAsset(file);
         setPendingAssetId(id);
@@ -87,38 +109,46 @@ export function MediaInput({
 
     return (
         <div className="flex flex-col gap-2">
-            <div className="flex flex-row items-center gap-2">
-                <Combobox
-                    items={options}
-                    value={comboboxValue}
-                    onValueChange={(e) => e?.value && onChange(e.value)}
-                    autoHighlight
-                >
-                    <ComboboxInput placeholder={placeholder} className="flex-1" />
-                    <ComboboxContent className="w-60">
-                        <ComboboxEmpty>No match found.</ComboboxEmpty>
-                        <ComboboxList>
-                            {(item) => (
-                                <ComboboxItem key={item.value} value={item}>
-                                    {item.label}
-                                </ComboboxItem>
-                            )}
-                        </ComboboxList>
-                    </ComboboxContent>
-                </Combobox>
-                <IconButton
-                    icon={Upload01Icon}
-                    iconStrokeWidth={2}
-                    label="Upload File"
-                    onClick={() => fileRef.current?.click()}
-                />
-                <input
-                    type="file"
-                    ref={fileRef}
-                    accept={accept}
-                    className="hidden"
-                    onChange={handleFileChange}
-                />
+            <div className="flex flex-col gap-1">
+                <div className="flex flex-row items-center gap-2">
+                    <Combobox
+                        items={options}
+                        value={comboboxValue}
+                        onValueChange={(e) => e?.value && onChange(e.value)}
+                        autoHighlight
+                    >
+                        <ComboboxInput placeholder={placeholder} className="flex-1" />
+                        <ComboboxContent className="w-60">
+                            <ComboboxEmpty>No match found.</ComboboxEmpty>
+                            <ComboboxList>
+                                {(item) => (
+                                    <ComboboxItem key={item.value} value={item}>
+                                        {item.label}
+                                    </ComboboxItem>
+                                )}
+                            </ComboboxList>
+                        </ComboboxContent>
+                    </Combobox>
+                    <IconButton
+                        type="button"
+                        icon={Upload01Icon}
+                        iconStrokeWidth={2}
+                        label="Upload File"
+                        onClick={() => fileRef.current?.click()}
+                    />
+                    <input
+                        type="file"
+                        ref={fileRef}
+                        accept={accept}
+                        className="hidden"
+                        onChange={handleFileChange}
+                    />
+                </div>
+                {accept && (
+                    <span className="text-muted-foreground text-xs font-normal">
+                        Supported formats: {accept}
+                    </span>
+                )}
             </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

@@ -43,3 +43,9 @@ export async function importProjectionsZip(zipFile: File) {
     const store = useProjectionStore.getState();
     importedProjections.forEach((p) => store.addProjection(p));
 }
+
+export function getFileNameFromId(id: string) {
+    // Strip UUID from id
+    // e.g. "asset://123e4567-e89b-12d3-a456-426614174000-filename.png" -> "filename.png"
+    return id.replace(/^asset:\/\/[0-9a-fA-F-]{36}-/, "");
+}

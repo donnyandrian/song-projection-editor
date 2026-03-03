@@ -20,7 +20,8 @@ import {
 import type { ProjectionItem, ProjectionTransition, ProjectionMaster } from "@/types";
 import { TextStyleField } from "@/components/master/inspector/text";
 import type { HandleUpdate, InputChanged } from "@/types/inspector";
-import { MediaInput, type ApplyScope } from "@/components/master/media-input";
+import { MediaInput, type ApplyScope, type AreaName } from "@/components/master/media-input";
+import * as mi from "@/const/media-input";
 
 export function Inspector() {
     const activeProjectionIndex = useMasterStore((s) => s.activeProjectionIndex);
@@ -45,15 +46,11 @@ export function Inspector() {
 
     const itemKey = `${activeProjectionIndex}-${activeContentIndex}`;
 
-    const applyBatchUpdate = (
-        assetId: string,
-        scope: ApplyScope,
-        sourceArea: "content" | "background",
-    ) => {
+    const applyBatchUpdate = (assetId: string, scope: ApplyScope, sourceArea: AreaName) => {
         if (scope === "single") {
             handleUpdate((old) => ({
                 ...old,
-                ...(sourceArea === "content" ? { content: assetId } : { bg: assetId }),
+                ...(sourceArea === mi.CONTENT_AREANAME ? { content: assetId } : { bg: assetId }),
             }));
             return;
         }
@@ -67,7 +64,7 @@ export function Inspector() {
                     if (sourceArea === "background") {
                         newItem.bg = assetId;
                     } else if (
-                        sourceArea === "content" &&
+                        sourceArea === mi.CONTENT_AREANAME &&
                         (newItem.type === "Image" || newItem.type === "Video")
                     ) {
                         newItem.content = assetId;
@@ -134,11 +131,7 @@ interface TabProps {
 }
 interface ContentTabProps extends TabProps {
     itemKey: string;
-    applyBatchUpdate: (
-        assetId: string,
-        scope: ApplyScope,
-        sourceArea: "content" | "background",
-    ) => void;
+    applyBatchUpdate: (assetId: string, scope: ApplyScope, sourceArea: AreaName) => void;
 }
 function InspectorContentTab({
     itemKey,
@@ -233,12 +226,10 @@ function InspectorContentTab({
                             value={typeof activeItem.content === "string" ? activeItem.content : ""}
                             onChange={contentChanged}
                             onUploadApply={(assetId, scope) =>
-                                applyBatchUpdate(assetId, scope, "content")
+                                applyBatchUpdate(assetId, scope, mi.CONTENT_AREANAME)
                             }
-                            areaName="content"
-                            accept={
-                                activeItem.type === "Image" ? "image/*" : "video/mp4, video/webm"
-                            }
+                            areaName={mi.CONTENT_AREANAME}
+                            accept={activeItem.type === "Image" ? mi.IMAGE_ACCEPT : mi.VIDEO_ACCEPT}
                             placeholder="Filename, URL, or Select Upload"
                         />
                     )}
@@ -258,11 +249,7 @@ function InspectorContentTab({
 
 interface BackgroundTabProps extends TabProps {
     activeProjection?: ProjectionMaster;
-    applyBatchUpdate: (
-        assetId: string,
-        scope: ApplyScope,
-        sourceArea: "content" | "background",
-    ) => void;
+    applyBatchUpdate: (assetId: string, scope: ApplyScope, sourceArea: AreaName) => void;
 }
 function InspectorBackgroundTab({
     activeItem,
@@ -283,10 +270,10 @@ function InspectorBackgroundTab({
                         value={activeItem.bg ?? ""}
                         onChange={backgroundChanged}
                         onUploadApply={(assetId, scope) =>
-                            applyBatchUpdate(assetId, scope, "background")
+                            applyBatchUpdate(assetId, scope, mi.BACKGROUND_AREANAME)
                         }
-                        areaName="background"
-                        accept="video/mp4, video/webm"
+                        areaName={mi.BACKGROUND_AREANAME}
+                        accept={mi.BACKGROUND_ACCEPT}
                         placeholder={
                             activeProjection?.bg
                                 ? `Inheriting: ${activeProjection.bg}`
