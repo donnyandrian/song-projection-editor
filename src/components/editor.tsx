@@ -1,13 +1,27 @@
 import { Tabs } from "@/components/ui/tabs";
-import { AddMasterButton, DeleteMasterButton, ImportExportButton, MasterTabs } from "@/components/master/queue";
+import {
+    AddMasterButton,
+    DeleteMasterButton,
+    ImportExportButton,
+    MasterTabs,
+} from "@/components/master/queue";
 import { MasterContents } from "@/components/master/content";
 import { useMasterStore } from "@/stores/master.store";
 import { useShallow } from "zustand/react/shallow";
 import { Inspector } from "@/components/master/inspector";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { useGlobalKeyboard } from "@/context/GlobalKeyboardContext";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useProjectionStore } from "@/stores/projection.store";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 function NavigatorKeyboard() {
     const [registerShortcut, unregisterShortcut] = useGlobalKeyboard();
@@ -88,6 +102,9 @@ export function Editor() {
     );
 
     const hasActiveTab = useMasterStore((s) => s.activeProjectionIndex >= 0);
+    const [mobileView, setMobileView] = useState<"queue" | "inspector">("queue");
+
+    const inspector = useMemo(() => <Inspector />, []);
 
     return (
         <div className="flex size-full flex-row overflow-hidden">
@@ -98,26 +115,58 @@ export function Editor() {
                 className="flex flex-1 flex-col overflow-hidden pt-2"
             >
                 <div className="flex w-full flex-row items-center gap-4 px-4">
-                    <h3 className="text-muted-foreground text-sm font-medium select-none">Queue</h3>
-                    <MasterTabs />
-                    <ButtonGroup>
+                    <h3 className="text-muted-foreground text-sm font-medium select-none max-sm:hidden">
+                        Queue
+                    </h3>
+
+                    <div className="sm:hidden">
+                        <Select
+                            value={mobileView}
+                            onValueChange={(v: "queue" | "inspector") => setMobileView(v)}
+                        >
+                            <SelectTrigger className="text-muted-foreground h-auto w-auto gap-1 border-0 p-0 text-sm font-medium shadow-none focus:ring-0 [&>svg]:size-4">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectItem value="queue">Queue</SelectItem>
+                                    <SelectItem value="inspector">Inspector</SelectItem>
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className={cn("contents", mobileView === "inspector" && "max-sm:hidden")}>
+                        <MasterTabs />
                         <ButtonGroup>
-                            <ImportExportButton />
-                        </ButtonGroup>
-                        <ButtonGroup>
-                            <AddMasterButton />
-                        </ButtonGroup>
-                        {hasActiveTab && (
                             <ButtonGroup>
-                                <DeleteMasterButton />
+                                <ImportExportButton />
                             </ButtonGroup>
-                        )}
-                    </ButtonGroup>
+                            <ButtonGroup>
+                                <AddMasterButton />
+                            </ButtonGroup>
+                            {hasActiveTab && (
+                                <ButtonGroup>
+                                    <DeleteMasterButton />
+                                </ButtonGroup>
+                            )}
+                        </ButtonGroup>
+                    </div>
                 </div>
-                <MasterContents />
+                <div className={cn("contents", mobileView === "inspector" && "max-sm:hidden")}>
+                    <MasterContents />
+                </div>
+                <div
+                    className={cn(
+                        "flex-1 flex-col overflow-hidden sm:hidden [&>div>div:first-child]:hidden",
+                        mobileView === "inspector" ? "flex" : "hidden",
+                    )}
+                >
+                    {inspector}
+                </div>
             </Tabs>
             <aside className="bg-background hidden flex-col border-l sm:flex sm:w-80">
-                <Inspector />
+                {inspector}
             </aside>
         </div>
     );

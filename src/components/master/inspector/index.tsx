@@ -91,7 +91,7 @@ export function Inspector() {
             </div>
 
             <Tabs defaultValue="content" className="flex flex-1 flex-col overflow-hidden">
-                <div className="px-4 pt-3">
+                <div className="px-4 pt-3 max-sm:pt-0">
                     <TabsList className="w-full grid-cols-3">
                         <TabsTrigger value="content" className="flex-1">
                             Content
