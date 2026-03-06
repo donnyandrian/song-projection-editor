@@ -9,6 +9,7 @@ import { useMasterStore } from "@/stores/master.store";
 import { useProjectionStore } from "@/stores/projection.store";
 import {
     Add01Icon,
+    Copy01Icon,
     Delete03Icon,
     File02Icon,
     FileExportIcon,
@@ -80,32 +81,36 @@ export function AddMasterButton() {
                 icon={Add01Icon}
                 iconStrokeWidth={2.25}
             >
-                <DialogTrigger asChild>
-                    <IconDropdownMenuItem
-                        label={"Add Queue"}
-                        text="Queue"
-                        icon={KeyframesDoubleIcon}
-                        iconStrokeWidth={1.75}
-                        onSelect={() => setDialogType("queue")}
-                        accelerator={{
-                            key: "A",
-                            shift: true,
-                        }}
-                    />
-                </DialogTrigger>
-                {hasActiveQueue && (
-                    <DialogTrigger asChild>
+                <DialogTrigger
+                    render={
                         <IconDropdownMenuItem
-                            label={"Add Content"}
-                            text="Content"
-                            icon={Layers01Icon}
+                            label={"Add Queue"}
+                            text="Queue"
+                            icon={KeyframesDoubleIcon}
                             iconStrokeWidth={1.75}
-                            onSelect={() => setDialogType("content")}
+                            onSelect={() => setDialogType("queue")}
                             accelerator={{
                                 key: "A",
+                                shift: true,
                             }}
                         />
-                    </DialogTrigger>
+                    }
+                />
+                {hasActiveQueue && (
+                    <DialogTrigger
+                        render={
+                            <IconDropdownMenuItem
+                                label={"Add Content"}
+                                text="Content"
+                                icon={Layers01Icon}
+                                iconStrokeWidth={1.75}
+                                onSelect={() => setDialogType("content")}
+                                accelerator={{
+                                    key: "A",
+                                }}
+                            />
+                        }
+                    />
                 )}
             </IconDropdownButton>
             {dialogContent}
@@ -125,16 +130,15 @@ export function DeleteMasterButton() {
         );
     }, [dialogType]);
 
-    const hasContents = useMasterStore((s) => {
-        const index = s.activeProjectionIndex;
-        return (s.getActiveProjection(index)?.contents.length ?? 0) > 0;
-    });
+    const hasActiveContent = useMasterStore(
+        (s) => s.activeProjectionIndex >= 0 && s.activeContentIndex >= 0,
+    );
 
     const [register, unregister] = useGlobalKeyboard();
     useEffect(() => {
         register("Delete", () => {
-            if ((useMasterStore.getState().getActiveProjection()?.contents?.length ?? 0) <= 0)
-                return;
+            const { activeProjectionIndex, activeContentIndex } = useMasterStore.getState();
+            if (activeProjectionIndex < 0 || activeContentIndex < 0) return;
 
             setDialogType("content");
             setOpenDialog(true);
@@ -172,7 +176,7 @@ export function DeleteMasterButton() {
                         }}
                     />
                 </AlertDialogTrigger>
-                {hasContents && (
+                {hasActiveContent && (
                     <AlertDialogTrigger asChild>
                         <IconDropdownMenuItem
                             label={"Delete Content"}
@@ -189,6 +193,82 @@ export function DeleteMasterButton() {
             </IconDropdownButton>
             {dialogContent}
         </AlertDialog>
+    );
+}
+
+export function DuplicateMasterButton() {
+    const hasActiveQueue = useMasterStore((s) => s.activeProjectionIndex >= 0);
+    const hasActiveContent = useMasterStore(
+        (s) => s.activeProjectionIndex >= 0 && s.activeContentIndex >= 0,
+    );
+
+    const handleDuplicateQueue = () => {
+        const { activeProjectionIndex, setActiveTab } = useMasterStore.getState();
+        if (activeProjectionIndex < 0) return;
+
+        const newId = useProjectionStore.getState().duplicateProjection(activeProjectionIndex);
+        if (newId) {
+            setActiveTab(newId);
+        }
+    };
+
+    const handleDuplicateContent = () => {
+        const { activeProjectionIndex, activeContentIndex, setActiveContentIndex } =
+            useMasterStore.getState();
+        if (activeProjectionIndex < 0 || activeContentIndex < 0) return;
+
+        const newIndex = useProjectionStore
+            .getState()
+            .duplicateContent(activeProjectionIndex, activeContentIndex);
+        if (newIndex !== null) {
+            setActiveContentIndex(newIndex);
+        }
+    };
+
+    const [register, unregister] = useGlobalKeyboard();
+    useEffect(() => {
+        register("Shift+D", handleDuplicateQueue);
+        register("D", handleDuplicateContent);
+
+        return () => {
+            unregister("Shift+D");
+            unregister("D");
+        };
+    }, [register, unregister]);
+
+    if (!hasActiveQueue) return null;
+
+    return (
+        <IconDropdownButton
+            size="icon-sm"
+            label="Duplicate Item"
+            icon={Copy01Icon}
+            iconStrokeWidth={2}
+        >
+            <IconDropdownMenuItem
+                label={"Duplicate Queue"}
+                text="Queue"
+                icon={KeyframesDoubleIcon}
+                iconStrokeWidth={1.75}
+                onSelect={handleDuplicateQueue}
+                accelerator={{
+                    key: "D",
+                    shift: true,
+                }}
+            />
+            {hasActiveContent && (
+                <IconDropdownMenuItem
+                    label={"Duplicate Content"}
+                    text="Content"
+                    icon={Layers01Icon}
+                    iconStrokeWidth={1.75}
+                    onSelect={handleDuplicateContent}
+                    accelerator={{
+                        key: "D",
+                    }}
+                />
+            )}
+        </IconDropdownButton>
     );
 }
 

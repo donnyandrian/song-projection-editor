@@ -2,6 +2,7 @@ import { Tabs } from "@/components/ui/tabs";
 import {
     AddMasterButton,
     DeleteMasterButton,
+    DuplicateMasterButton,
     ImportExportButton,
     MasterTabs,
 } from "@/components/master/queue";
@@ -142,8 +143,9 @@ export function Editor() {
                             <ButtonGroup>
                                 <ImportExportButton />
                             </ButtonGroup>
-                            <ButtonGroup>
+                            <ButtonGroup className="[&>*:not(:first-child)>*]:rounded-l-none [&>*:not(:first-child)>*]:border-l-0 [&>*:not(:last-child)>*]:rounded-r-none">
                                 <AddMasterButton />
+                                <DuplicateMasterButton />
                             </ButtonGroup>
                             {hasActiveTab && (
                                 <ButtonGroup>

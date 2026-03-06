@@ -52,7 +52,6 @@ export function DeleteMasterContent({ setOpenDialog }: DialogProps) {
 
         if (newIndex === null) return;
 
-        useMasterStore.getState().setActiveContentIndex(-1);
         useMasterStore.getState().setActiveContentIndex(newIndex);
 
         setOpenDialog(false);

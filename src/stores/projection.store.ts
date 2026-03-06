@@ -26,8 +26,10 @@ interface ProjectionActions {
     setProjectionsWithIds: (projections: Setter<ProjectionMasterWithId[]>) => void;
 
     addProjection: (projection: ProjectionMaster) => string;
+    duplicateProjection: (projectionIndex: number) => string | null;
     deleteProjection: (projectionIndex: number) => string | null;
     addContent: (projectionIndex: number, content: ProjectionMaster["contents"][number]) => number;
+    duplicateContent: (projectionIndex: number, contentIndex: number) => number | null;
     updateContent: (
         projectionIndex: number,
         contentIndex: number,
@@ -134,6 +136,33 @@ export const useProjectionStore = create<ProjectionStore>((set, get) => ({
 
         return id;
     },
+    duplicateProjection: (projectionIndex) => {
+        if (projectionIndex > get().projections.length - 1 || projectionIndex < 0) return null;
+
+        let newId: string | null = null;
+        set((s) => {
+            const p = [...s.projections];
+            const original = p[projectionIndex];
+
+            const duplicated = {
+                ...original,
+                id: uuidv4(),
+                contents: original.contents.map((c) => ({ ...c })),
+            };
+            newId = duplicated.id;
+
+            // Insert exactly after the active queue
+            p.splice(projectionIndex + 1, 0, duplicated);
+
+            useTransitionStore.getState().syncWithProjections(p);
+            return {
+                ...backgroundMiner(p),
+                projections: p,
+            };
+        });
+
+        return newId;
+    },
     deleteProjection: (projectionIndex) => {
         if (projectionIndex > get().projections.length - 1 || projectionIndex < 0) return null;
 
@@ -159,7 +188,14 @@ export const useProjectionStore = create<ProjectionStore>((set, get) => ({
 
         set((s) => {
             const p = [...s.projections];
-            last = p[projectionIndex]!.contents.push(content) - 1;
+
+            // Shallow clone projection and contents to prevent mutable references issues
+            const newProjection = { ...p[projectionIndex] };
+            newProjection.contents = [...newProjection.contents, content];
+
+            p[projectionIndex] = newProjection;
+            last = newProjection.contents.length - 1;
+
             useTransitionStore.getState().syncWithProjections(p);
             return {
                 ...backgroundMiner(p),
@@ -169,13 +205,44 @@ export const useProjectionStore = create<ProjectionStore>((set, get) => ({
 
         return last;
     },
+    duplicateContent: (projectionIndex, contentIndex) => {
+        if (projectionIndex > get().projections.length - 1 || projectionIndex < 0) return null;
+
+        let newIndex: number | null = null;
+        set((s) => {
+            const p = [...s.projections];
+            const originalContent = p[projectionIndex].contents[contentIndex];
+            if (!originalContent) return s;
+
+            newIndex = contentIndex + 1;
+
+            // Shallow clone projection and contents to prevent mutable references issues
+            const newProjection = { ...p[projectionIndex] };
+            newProjection.contents = [...newProjection.contents];
+            newProjection.contents.splice(newIndex, 0, { ...originalContent });
+            p[projectionIndex] = newProjection;
+
+            useTransitionStore.getState().syncWithProjections(p);
+            return {
+                ...backgroundMiner(p),
+                projections: p,
+            };
+        });
+
+        return newIndex;
+    },
     updateContent: (projectionIndex, contentIndex, updater) => {
         set((s) => {
             const p = [...s.projections];
             const oldContent = p[projectionIndex].contents[contentIndex];
             if (!oldContent) return s;
 
-            p[projectionIndex].contents[contentIndex] = updater(oldContent);
+            // Shallow clone projection and contents to prevent mutable references issues
+            const newProjection = { ...p[projectionIndex] };
+            newProjection.contents = [...newProjection.contents];
+            newProjection.contents[contentIndex] = updater(oldContent);
+
+            p[projectionIndex] = newProjection;
 
             useTransitionStore.getState().syncWithProjections(p);
             return {
@@ -190,9 +257,16 @@ export const useProjectionStore = create<ProjectionStore>((set, get) => ({
         let newIndex: number | null = null;
         set((s) => {
             const p = [...s.projections];
-            p[projectionIndex].contents.splice(contentIndex, 1);
 
-            if (p[projectionIndex].contents.length === 0) newIndex = -1;
+            // Shallow clone projection and contents to prevent mutable references issues
+            const newProjection = { ...p[projectionIndex] };
+            newProjection.contents = [...newProjection.contents];
+
+            newProjection.contents.splice(contentIndex, 1);
+
+            p[projectionIndex] = newProjection;
+
+            if (newProjection.contents.length === 0) newIndex = -1;
             else if (contentIndex === 0) newIndex = 0;
             else newIndex = contentIndex - 1;
 
