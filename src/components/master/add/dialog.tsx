@@ -205,6 +205,8 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
                 }
             };
 
+            const transitionVal = (data.get("transition") as string).trim();
+
             const last = useProjectionStore.getState().addContent(index, {
                 type: data.get("type"),
                 content: data.get("content") as string,
@@ -213,7 +215,7 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
                 name: (data.get("name") as string).trim() || undefined,
                 group: (data.get("group") as string).trim() || undefined,
                 bg: (data.get("background") as string).trim() || undefined,
-                transition: (data.get("transition") as string).trim() || undefined,
+                transition: transitionVal === "inherit" ? undefined : transitionVal || undefined,
             } as ContentT);
 
             useMasterStore.getState().setActiveContentIndex(last);
@@ -277,12 +279,13 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
                     </Field>
                     <Field>
                         <FieldLabel className="gap-0.5">Transition</FieldLabel>
-                        <Select name="transition" defaultValue={currentProjection?.transition}>
+                        <Select name="transition" defaultValue={"inherit"}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Transition" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectGroup>
+                                    <SelectItem value="inherit">Inherit</SelectItem>
                                     <SelectItem value="none">None</SelectItem>
                                     <SelectItem value="fade">Fade</SelectItem>
                                 </SelectGroup>
