@@ -27,7 +27,12 @@ interface ProjectionActions {
 
     addProjection: (projection: ProjectionMaster) => string;
     duplicateProjection: (projectionIndex: number) => string | null;
+    updateProjection: (
+        projectionIndex: number,
+        updater: (old: ProjectionMasterWithId) => ProjectionMasterWithId,
+    ) => void;
     deleteProjection: (projectionIndex: number) => string | null;
+
     addContent: (projectionIndex: number, content: ProjectionMaster["contents"][number]) => number;
     duplicateContent: (projectionIndex: number, contentIndex: number) => number | null;
     updateContent: (
@@ -163,6 +168,22 @@ export const useProjectionStore = create<ProjectionStore>((set, get) => ({
 
         return newId;
     },
+    updateProjection: (projectionIndex, updater) => {
+        set((s) => {
+            const p = [...s.projections];
+            const oldProjection = p[projectionIndex];
+            if (!oldProjection) return s;
+
+            // Update the projection using the updater callback
+            p[projectionIndex] = updater({ ...oldProjection });
+
+            useTransitionStore.getState().syncWithProjections(p);
+            return {
+                ...backgroundMiner(p),
+                projections: p,
+            };
+        });
+    },
     deleteProjection: (projectionIndex) => {
         if (projectionIndex > get().projections.length - 1 || projectionIndex < 0) return null;
 
@@ -183,6 +204,7 @@ export const useProjectionStore = create<ProjectionStore>((set, get) => ({
 
         return newId;
     },
+
     addContent: (projectionIndex, content) => {
         let last: number = -1;
 

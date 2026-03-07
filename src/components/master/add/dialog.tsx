@@ -120,7 +120,7 @@ export function AddMasterQueue({ setOpenDialog }: DialogProps) {
                         </FieldLabel>
                         <Select defaultValue="fade" name="transition" required>
                             <SelectTrigger>
-                                <SelectValue placeholder="Transition" />
+                                <SelectValue placeholder="Fade" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectGroup>

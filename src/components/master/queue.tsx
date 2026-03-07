@@ -33,7 +33,7 @@ export function MasterTabs() {
         <TabsList className="justify-start overflow-scroll *:px-6">
             {projections.map((p) => (
                 <TabsTrigger key={p.id} value={p.id}>
-                    {p.title}
+                    {p.title || "Untitled Master"}
                 </TabsTrigger>
             ))}
         </TabsList>

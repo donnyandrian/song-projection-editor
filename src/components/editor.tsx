@@ -9,7 +9,7 @@ import {
 import { MasterContents } from "@/components/master/content";
 import { useMasterStore } from "@/stores/master.store";
 import { useShallow } from "zustand/react/shallow";
-import { Inspector } from "@/components/master/inspector";
+import { InspectMode, Inspector } from "@/components/master/inspector";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { useGlobalKeyboard } from "@/context/GlobalKeyboardContext";
 import { useEffect, useMemo, useState } from "react";
@@ -105,7 +105,10 @@ export function Editor() {
     const hasActiveTab = useMasterStore((s) => s.activeProjectionIndex >= 0);
     const [mobileView, setMobileView] = useState<"queue" | "inspector">("queue");
 
-    const inspector = useMemo(() => <Inspector />, []);
+    const modeSelector = useMemo(() => <InspectMode />, []);
+    const inspector = useMemo(() => <Inspector children={modeSelector} />, [modeSelector]);
+
+    const isInspector = mobileView === "inspector";
 
     return (
         <div className="flex size-full flex-row overflow-hidden">
@@ -137,9 +140,9 @@ export function Editor() {
                         </Select>
                     </div>
 
-                    <div className={cn("contents", mobileView === "inspector" && "max-sm:hidden")}>
+                    <div className={cn("contents", isInspector && "max-sm:hidden")}>
                         <MasterTabs />
-                        <ButtonGroup>
+                        <ButtonGroup className="ml-auto">
                             <ButtonGroup>
                                 <ImportExportButton />
                             </ButtonGroup>
@@ -154,14 +157,18 @@ export function Editor() {
                             )}
                         </ButtonGroup>
                     </div>
+
+                    <div className={cn("hidden *:ml-auto", isInspector && "max-sm:contents")}>
+                        {modeSelector}
+                    </div>
                 </div>
-                <div className={cn("contents", mobileView === "inspector" && "max-sm:hidden")}>
+                <div className={cn("contents", isInspector && "max-sm:hidden")}>
                     <MasterContents />
                 </div>
                 <div
                     className={cn(
                         "flex-1 flex-col overflow-hidden sm:hidden [&>div>div:first-child]:hidden",
-                        mobileView === "inspector" ? "flex" : "hidden",
+                        isInspector ? "flex" : "hidden",
                     )}
                 >
                     {inspector}

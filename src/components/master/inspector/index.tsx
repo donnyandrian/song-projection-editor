@@ -17,20 +17,38 @@ import {
     FieldLabel,
     FieldSeparator,
 } from "@/components/ui/field";
-import type { ProjectionItem, ProjectionTransition, ProjectionMaster } from "@/types";
+import type {
+    ProjectionItem,
+    ProjectionTransition,
+    ProjectionMaster,
+    ProjectionMasterWithId,
+} from "@/types";
 import { TextStyleField } from "@/components/master/inspector/text";
 import type { HandleUpdate, InputChanged } from "@/types/inspector";
 import { MediaInput, type ApplyScope, type AreaName } from "@/components/master/media-input";
 import * as mi from "@/const/media-input";
+import { useInspectorStore } from "@/stores/inspector.store";
 
-export function Inspector() {
+interface InspectorProps {
+    children?: React.ReactNode;
+}
+export function Inspector({ children }: InspectorProps) {
+    const inspectMode = useInspectorStore((s) => s.mode);
+
     const activeProjectionIndex = useMasterStore((s) => s.activeProjectionIndex);
     const activeContentIndex = useMasterStore((s) => s.activeContentIndex);
-    const updateContent = useProjectionStore((s) => s.updateContent);
     const projections = useProjectionStore((s) => s.projections);
 
     const activeProjection = projections[activeProjectionIndex];
     const activeItem = activeProjection?.contents[activeContentIndex];
+    
+    if (!activeProjection) {
+        return (
+            <div className="text-muted-foreground flex h-full items-center justify-center p-6 text-center text-sm">
+                Select a queue to inspect its properties.
+            </div>
+        );
+    }
 
     if (!activeItem) {
         return (
@@ -40,8 +58,16 @@ export function Inspector() {
         );
     }
 
+    const handleUpdateQueue = (
+        updater: (old: ProjectionMasterWithId) => ProjectionMasterWithId,
+    ) => {
+        useProjectionStore.getState().updateProjection(activeProjectionIndex, updater);
+    };
+
     const handleUpdate: HandleUpdate = (updater) => {
-        updateContent(activeProjectionIndex, activeContentIndex, updater);
+        useProjectionStore
+            .getState()
+            .updateContent(activeProjectionIndex, activeContentIndex, updater);
     };
 
     const itemKey = `${activeProjectionIndex}-${activeContentIndex}`;
@@ -86,42 +112,73 @@ export function Inspector() {
 
     return (
         <div className="bg-background flex h-full flex-col overflow-hidden">
-            <div className="border-b px-4 py-3">
+            <div className="flex items-center justify-between border-b px-4 py-3">
                 <h3 className="text-muted-foreground text-sm font-medium select-none">Inspector</h3>
+                {children}
             </div>
 
-            <Tabs defaultValue="content" className="flex flex-1 flex-col overflow-hidden">
-                <div className="px-4 pt-3 max-sm:pt-0">
-                    <TabsList className="w-full grid-cols-3">
-                        <TabsTrigger value="content" className="flex-1">
-                            Content
-                        </TabsTrigger>
-                        <TabsTrigger value="background" className="flex-1">
-                            Background
-                        </TabsTrigger>
-                        <TabsTrigger value="transition" className="flex-1">
-                            Transition
-                        </TabsTrigger>
-                    </TabsList>
-                </div>
+            {inspectMode === "content" ? (
+                <Tabs defaultValue="content" className="flex flex-1 flex-col overflow-hidden">
+                    <div className="px-4 pt-3 max-sm:pt-0">
+                        <TabsList className="w-full grid-cols-3">
+                            <TabsTrigger value="content" className="flex-1">
+                                Content
+                            </TabsTrigger>
+                            <TabsTrigger value="background" className="flex-1">
+                                Background
+                            </TabsTrigger>
+                            <TabsTrigger value="transition" className="flex-1">
+                                Transition
+                            </TabsTrigger>
+                        </TabsList>
+                    </div>
 
+                    <div className="no-scrollbar relative flex-1 overflow-y-auto p-4">
+                        <InspectorContentTab
+                            itemKey={itemKey}
+                            activeItem={activeItem}
+                            handleUpdate={handleUpdate}
+                            applyBatchUpdate={applyBatchUpdate}
+                        />
+                        <InspectorBackgroundTab
+                            activeItem={activeItem}
+                            handleUpdate={handleUpdate}
+                            activeProjection={activeProjection}
+                            applyBatchUpdate={applyBatchUpdate}
+                        />
+                        <InspectorTransitionTab
+                            activeItem={activeItem}
+                            handleUpdate={handleUpdate}
+                        />
+                    </div>
+                </Tabs>
+            ) : (
                 <div className="no-scrollbar relative flex-1 overflow-y-auto p-4">
-                    <InspectorContentTab
-                        itemKey={itemKey}
-                        activeItem={activeItem}
-                        handleUpdate={handleUpdate}
-                        applyBatchUpdate={applyBatchUpdate}
-                    />
-                    <InspectorBackgroundTab
-                        activeItem={activeItem}
-                        handleUpdate={handleUpdate}
+                    <InspectorQueueTab
                         activeProjection={activeProjection}
+                        handleUpdateQueue={handleUpdateQueue}
                         applyBatchUpdate={applyBatchUpdate}
                     />
-                    <InspectorTransitionTab activeItem={activeItem} handleUpdate={handleUpdate} />
                 </div>
-            </Tabs>
+            )}
         </div>
+    );
+}
+
+export function InspectMode() {
+    const inspectMode = useInspectorStore((s) => s.mode);
+    const setInspectMode = useInspectorStore((s) => s.setMode);
+
+    return (
+        <Select value={inspectMode} onValueChange={setInspectMode}>
+            <SelectTrigger size="sm" className="h-7 w-28 text-xs">
+                <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="w-28 min-w-28 **:text-xs">
+                <SelectItem value="queue">Queue</SelectItem>
+                <SelectItem value="content">Content</SelectItem>
+            </SelectContent>
+        </Select>
     );
 }
 
@@ -320,5 +377,93 @@ function InspectorTransitionTab({ activeItem, handleUpdate }: TabProps) {
                 </Field>
             </FieldGroup>
         </TabsContent>
+    );
+}
+
+function InspectorQueueTab({
+    activeProjection,
+    handleUpdateQueue,
+    applyBatchUpdate,
+}: {
+    activeProjection: ProjectionMasterWithId;
+    handleUpdateQueue: (updater: (old: ProjectionMasterWithId) => ProjectionMasterWithId) => void;
+    applyBatchUpdate: (assetId: string, scope: ApplyScope, sourceArea: AreaName) => void;
+}) {
+    const titleChanged: InputChanged = (e) => {
+        handleUpdateQueue((old) => ({ ...old, title: e.target.value }));
+    };
+
+    const titleBlurred = () => {
+        // Enforce a fallback if the title is left completely empty
+        if (!activeProjection.title?.trim()) {
+            handleUpdateQueue((old) => ({ ...old, title: "Untitled Master" }));
+        }
+    };
+
+    const backgroundChanged = (val: string) => {
+        handleUpdateQueue((old) => ({ ...old, bg: val || "transparent" }));
+    };
+
+    const transitionChanged = (val: ProjectionTransition) => {
+        handleUpdateQueue((old) => ({
+            ...old,
+            transition: val,
+        }));
+    };
+
+    return (
+        <div className="flex flex-col gap-4">
+            <FieldGroup>
+                <Field>
+                    <FieldLabel>Queue Title</FieldLabel>
+                    <Input
+                        value={activeProjection.title}
+                        onChange={titleChanged}
+                        onBlur={titleBlurred}
+                        placeholder="Master 1"
+                        required
+                    />
+                </Field>
+
+                <Field>
+                    <FieldLabel>Default Background</FieldLabel>
+                    <MediaInput
+                        value={activeProjection.bg}
+                        onChange={backgroundChanged}
+                        onUploadApply={(assetId, scope) => {
+                            backgroundChanged(assetId);
+                            if (scope !== "single") {
+                                applyBatchUpdate(assetId, scope, mi.BACKGROUND_AREANAME);
+                            }
+                        }}
+                        areaName={mi.BACKGROUND_AREANAME}
+                        accept={mi.BACKGROUND_ACCEPT}
+                        placeholder="No background"
+                    />
+                    <FieldDescription>
+                        Fallback background applied to all nodes in this queue.
+                    </FieldDescription>
+                </Field>
+
+                <Field>
+                    <FieldLabel>Default Transition</FieldLabel>
+                    <Select
+                        value={activeProjection.transition ?? "fade"}
+                        onValueChange={transitionChanged}
+                        required
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Fade" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectItem value="none">None</SelectItem>
+                                <SelectItem value="fade">Fade</SelectItem>
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                </Field>
+            </FieldGroup>
+        </div>
     );
 }
