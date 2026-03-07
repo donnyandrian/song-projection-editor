@@ -4,7 +4,8 @@ import { DeleteMasterContent, DeleteMasterQueue } from "@/components/master/dele
 import { AlertDialog, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useGlobalKeyboard } from "@/context/GlobalKeyboardContext";
+import { useShortcut } from "@/hooks/use-shortcuts";
+import { useShortcutsStore } from "@/stores/shortcuts.store";
 import { useMasterStore } from "@/stores/master.store";
 import { useProjectionStore } from "@/stores/projection.store";
 import {
@@ -19,10 +20,16 @@ import {
     KeyframesDoubleIcon,
     Layers01Icon,
 } from "@hugeicons-pro/core-stroke-rounded";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { importProjectionsZip } from "@/lib/import";
-import { exportProjections } from "@/lib/export";
+import {
+    duplContent,
+    duplQueue,
+    exportActive,
+    exportAll,
+    exportSeparate,
+    importFileChange,
+} from "@/lib/queue";
 
 export function MasterTabs() {
     const projections = useProjectionStore((s) => s.projections);
@@ -54,27 +61,24 @@ export function AddMasterButton() {
 
     const hasActiveQueue = useMasterStore((s) => s.activeProjectionIndex >= 0);
 
-    const [register, unregister] = useGlobalKeyboard();
-    useEffect(() => {
-        register("A", () => {
-            if (useMasterStore.getState().activeProjectionIndex < 0) return;
+    useShortcut({ key: "a" }, () => {
+        if (useMasterStore.getState().activeProjectionIndex < 0) return;
 
-            setDialogType("content");
-            setOpenDialog(true);
-        });
-        register("Shift+A", () => {
-            setDialogType("queue");
-            setOpenDialog(true);
-        });
+        setDialogType("content");
+        setOpenDialog(true);
+    });
+    useShortcut({ key: "a", shift: true }, () => {
+        setDialogType("queue");
+        setOpenDialog(true);
+    });
 
-        return () => {
-            unregister("A");
-            unregister("Shift+A");
-        };
-    }, [register, unregister]);
+    const openChanged = (open: boolean) => {
+        useShortcutsStore.getState().toggleShortcuts(!open);
+        setOpenDialog(open);
+    };
 
     return (
-        <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <Dialog open={openDialog} onOpenChange={openChanged}>
             <IconDropdownButton
                 size="icon-sm"
                 label="Add Item"
@@ -134,28 +138,25 @@ export function DeleteMasterButton() {
         (s) => s.activeProjectionIndex >= 0 && s.activeContentIndex >= 0,
     );
 
-    const [register, unregister] = useGlobalKeyboard();
-    useEffect(() => {
-        register("Delete", () => {
-            const { activeProjectionIndex, activeContentIndex } = useMasterStore.getState();
-            if (activeProjectionIndex < 0 || activeContentIndex < 0) return;
+    useShortcut({ key: "Delete" }, () => {
+        const { activeProjectionIndex, activeContentIndex } = useMasterStore.getState();
+        if (activeProjectionIndex < 0 || activeContentIndex < 0) return;
 
-            setDialogType("content");
-            setOpenDialog(true);
-        });
-        register("Shift+Delete", () => {
-            setDialogType("queue");
-            setOpenDialog(true);
-        });
+        setDialogType("content");
+        setOpenDialog(true);
+    });
+    useShortcut({ key: "Delete", shift: true }, () => {
+        setDialogType("queue");
+        setOpenDialog(true);
+    });
 
-        return () => {
-            unregister("Delete");
-            unregister("Shift+Delete");
-        };
-    }, [register, unregister]);
+    const openChanged = (open: boolean) => {
+        useShortcutsStore.getState().toggleShortcuts(!open);
+        setOpenDialog(open);
+    };
 
     return (
-        <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
+        <AlertDialog open={openDialog} onOpenChange={openChanged}>
             <IconDropdownButton
                 size="icon-sm"
                 label="Delete Item"
@@ -202,39 +203,8 @@ export function DuplicateMasterButton() {
         (s) => s.activeProjectionIndex >= 0 && s.activeContentIndex >= 0,
     );
 
-    const handleDuplicateQueue = () => {
-        const { activeProjectionIndex, setActiveTab } = useMasterStore.getState();
-        if (activeProjectionIndex < 0) return;
-
-        const newId = useProjectionStore.getState().duplicateProjection(activeProjectionIndex);
-        if (newId) {
-            setActiveTab(newId);
-        }
-    };
-
-    const handleDuplicateContent = () => {
-        const { activeProjectionIndex, activeContentIndex, setActiveContentIndex } =
-            useMasterStore.getState();
-        if (activeProjectionIndex < 0 || activeContentIndex < 0) return;
-
-        const newIndex = useProjectionStore
-            .getState()
-            .duplicateContent(activeProjectionIndex, activeContentIndex);
-        if (newIndex !== null) {
-            setActiveContentIndex(newIndex);
-        }
-    };
-
-    const [register, unregister] = useGlobalKeyboard();
-    useEffect(() => {
-        register("Shift+D", handleDuplicateQueue);
-        register("D", handleDuplicateContent);
-
-        return () => {
-            unregister("Shift+D");
-            unregister("D");
-        };
-    }, [register, unregister]);
+    useShortcut({ key: "D", shift: true }, duplQueue);
+    useShortcut({ key: "D" }, duplContent);
 
     if (!hasActiveQueue) return null;
 
@@ -250,7 +220,7 @@ export function DuplicateMasterButton() {
                 text="Queue"
                 icon={KeyframesDoubleIcon}
                 iconStrokeWidth={1.75}
-                onSelect={handleDuplicateQueue}
+                onSelect={duplQueue}
                 accelerator={{
                     key: "D",
                     shift: true,
@@ -262,7 +232,7 @@ export function DuplicateMasterButton() {
                     text="Content"
                     icon={Layers01Icon}
                     iconStrokeWidth={1.75}
-                    onSelect={handleDuplicateContent}
+                    onSelect={duplContent}
                     accelerator={{
                         key: "D",
                     }}
@@ -282,64 +252,9 @@ export function ImportExportButton() {
         fileInputRef.current?.click();
     };
 
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        try {
-            if (file.name.endsWith(".zip")) {
-                await importProjectionsZip(file);
-            } else {
-                alert("Please select a valid .zip export file.");
-            }
-        } catch (err) {
-            console.error("Import failed", err);
-            alert("Failed to import. The file might be corrupted or in an older format.");
-        }
-
-        // Reset the input so the user can import the same file again if needed
-        e.target.value = "";
-    };
-
-    const handleExportAll = () => {
-        const projections = useProjectionStore.getState().projections;
-        if (projections.length === 0) return;
-        void exportProjections(projections, "projections-all.zip", false);
-    };
-
-    const handleExportActive = () => {
-        const activeProjectionIndex = useMasterStore.getState().activeProjectionIndex;
-        const projections = useProjectionStore.getState().projections;
-
-        if (activeProjectionIndex < 0) return;
-
-        const activeProjection = projections[activeProjectionIndex];
-        if (!activeProjection) return;
-
-        // Basic sanitization for the filename
-        const safeTitle = activeProjection.title.replace(/[^a-z0-9]/gi, "_").toLowerCase();
-        void exportProjections([activeProjection], `projection-${safeTitle}.zip`, false);
-    };
-
-    const handleExportSeparate = () => {
-        const projections = useProjectionStore.getState().projections;
-        if (projections.length === 0) return;
-
-        void exportProjections(projections, "projections-separate.zip", true);
-    };
-
-    const [register, unregister] = useGlobalKeyboard();
-    useEffect(() => {
-        register("Shift+I", handleImportClick);
-        register("Shift+E", handleExportAll);
-        register("Shift+P", handleExportActive);
-
-        return () => {
-            unregister("Shift+I");
-            unregister("Shift+E");
-            unregister("Shift+P");
-        };
-    }, [register, unregister]);
+    useShortcut({ key: "I", shift: true }, handleImportClick);
+    useShortcut({ key: "E", shift: true }, exportAll);
+    useShortcut({ key: "P", shift: true }, exportActive);
 
     return (
         <>
@@ -348,7 +263,7 @@ export function ImportExportButton() {
                 accept=".zip"
                 className="hidden"
                 ref={fileInputRef}
-                onChange={handleFileChange}
+                onChange={importFileChange}
             />
             <IconDropdownButton
                 size="icon-sm"
@@ -373,14 +288,14 @@ export function ImportExportButton() {
                             icon={FileExportIcon}
                             iconStrokeWidth={1.75}
                             accelerator={{ key: "E", shift: true }}
-                            onSelect={handleExportAll}
+                            onSelect={exportAll}
                         />
                         <IconDropdownMenuItem
                             label={"Export Separate"}
                             text="Export Separate Files"
                             icon={Files01Icon}
                             iconStrokeWidth={1.75}
-                            onSelect={handleExportSeparate}
+                            onSelect={exportSeparate}
                         />
                     </>
                 )}
@@ -391,7 +306,7 @@ export function ImportExportButton() {
                         icon={FileViewIcon}
                         iconStrokeWidth={1.75}
                         accelerator={{ key: "P", shift: true }}
-                        onSelect={handleExportActive}
+                        onSelect={exportActive}
                     />
                 )}
             </IconDropdownButton>

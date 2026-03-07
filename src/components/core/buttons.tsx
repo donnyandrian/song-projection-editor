@@ -9,9 +9,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useGlobalKeyboard } from "@/context/GlobalKeyboardContext";
+import { useShortcut } from "@/hooks/use-shortcuts";
+import type { Accelerator } from "@/types";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
-import { useEffect, memo } from "react";
+import { memo } from "react";
 
 interface BaseIconButtonProps {
     label: string;
@@ -20,13 +21,7 @@ interface BaseIconButtonProps {
     iconClassName?: string;
     text?: string;
     textClassName?: string;
-    accelerator?: {
-        shift?: boolean;
-        meta?: boolean;
-        alt?: boolean;
-        ctrl?: boolean;
-        key: string;
-    };
+    accelerator?: Accelerator;
 }
 
 interface IconButtonProps extends BaseIconButtonProps {
@@ -46,25 +41,7 @@ export const IconButton = memo(function IconButton({
     onClick,
     accelerator,
 }: IconButtonProps) {
-    const [register, unregister] = useGlobalKeyboard();
-    useEffect(() => {
-        if (accelerator) {
-            const key = `${accelerator.shift ? "Shift+" : ""}${
-                accelerator.meta ? "Meta+" : ""
-            }${accelerator.alt ? "Alt+" : ""}${accelerator.ctrl ? "Ctrl+" : ""}${accelerator.key}`;
-
-            register(
-                key,
-                onClick ??
-                    (() => {
-                        /* do nothing */
-                    }),
-            );
-            return () => {
-                unregister(key);
-            };
-        }
-    }, [accelerator, register, unregister, onClick]);
+    useShortcut(accelerator, onClick);
 
     return (
         <Tooltip>

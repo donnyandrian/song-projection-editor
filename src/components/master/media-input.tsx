@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Upload01Icon } from "@hugeicons-pro/core-stroke-rounded";
 import { useAssetStore } from "@/stores/asset.store";
 import { getFileNameFromId } from "@/lib/import";
+import { useShortcutsStore } from "@/stores/shortcuts.store";
 
 export type ApplyScope = "single" | "area" | "all";
 export type AreaName = "content" | "background";
@@ -114,6 +115,11 @@ export function MediaInput({
         setSelectedScope("single");
     };
 
+    const openChanged = (open: boolean) => {
+        useShortcutsStore.getState().toggleShortcuts(!open);
+        setIsDialogOpen(open);
+    };
+
     return (
         <div className="flex flex-col gap-2">
             <div className="flex flex-col gap-1">
@@ -158,7 +164,7 @@ export function MediaInput({
                 )}
             </div>
 
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={openChanged}>
                 <DialogContent className="max-md:size-full max-md:max-w-full! md:max-h-[80dvh] md:max-w-[80dvw] lg:max-w-[90dvw]">
                     <DialogHeader>
                         <DialogTitle>Apply Uploaded File</DialogTitle>
