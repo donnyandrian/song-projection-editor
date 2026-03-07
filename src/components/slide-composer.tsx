@@ -86,8 +86,7 @@ export const SlideBackgroundComposer = memo(function SlideBackgroundComposer({
         [currentProjection, currentIndex, rawBackground],
         "",
     );
-    // @ts-expect-error
-    const isShowBg = true; /* !isTransparent(background) */
+    const isShowBg = !isTransparent(background)
 
     const transition = useTransitionStore((s) => s.getTransition(currentProjection, currentIndex));
 

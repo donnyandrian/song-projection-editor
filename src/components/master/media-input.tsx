@@ -53,7 +53,7 @@ export function MediaInput({
 
     // Format stored assets as suggestions for the Combobox
     const options = useMemo(() => {
-        return Object.values(assets)
+        const list = Object.values(assets)
             .filter((a) => {
                 if (!accept) return true;
                 const acceptList = accept.split(",").map((s) => s.trim().toLowerCase());
@@ -67,9 +67,16 @@ export function MediaInput({
                 const v = a.id;
                 return { value: v, label: getFileNameFromId(v) };
             });
-    }, [accept, assets]);
+
+        if (areaName === "background") {
+            list.unshift({ value: "transparent", label: "Transparent" });
+        }
+
+        return list;
+    }, [accept, areaName, assets]);
 
     const comboboxValue = useMemo(() => {
+        if (value === "transparent") return { value: "transparent", label: "Transparent" };
         if (!value || !(value in assets)) return null;
 
         const v = assets[value].id;
