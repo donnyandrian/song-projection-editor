@@ -175,7 +175,7 @@ export const useProjectionStore = create<ProjectionStore>((set, get) => ({
             if (!oldProjection) return s;
 
             // Update the projection using the updater callback
-            p[projectionIndex] = updater({ ...oldProjection });
+            p[projectionIndex] = updater(oldProjection);
 
             useTransitionStore.getState().syncWithProjections(p);
             return {
