@@ -7,7 +7,8 @@
     "dev": "bunx --bun vite",
     "build": "tsc -b && bunx --bun vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@base-ui/react": "1.2.0",
@@ -41,6 +42,7 @@
     "eslint": "9.39.2",
     "eslint-plugin-react-hooks": "7.0.1",
     "eslint-plugin-react-refresh": "0.4.26",
+    "gh-pages": "^6.3.0",
     "globals": "16.5.0",
     "prettier": "3.8.1",
     "prettier-plugin-tailwindcss": "0.7.2",

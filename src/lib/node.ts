@@ -49,7 +49,7 @@ export function projectionToNode(source: ProjectionItem["type"]): NodeType {
         case "Video":
             return "video";
         // This should be changed to its own type
-        // @ts-expect-error
+        // // @ts-expect-error
         case "Component":
         default:
             return "background";
