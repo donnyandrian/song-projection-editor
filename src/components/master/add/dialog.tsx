@@ -23,6 +23,14 @@ import { useCallback, useMemo, useState } from "react";
 import { CssStylesInput, type StyleItem } from "@/components/master/shared/css-styles-input";
 import { MediaInput } from "@/components/master/media-input";
 import * as mi from "@/const/media-input";
+import {
+    Combobox,
+    ComboboxContent,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+} from "@/components/ui/combobox";
+import { Textarea } from "@/components/ui/textarea";
 
 interface DialogProps {
     setOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
@@ -142,9 +150,20 @@ export function AddMasterQueue({ setOpenDialog }: DialogProps) {
 
 type ContentT = ProjectionMaster["contents"][number];
 export function AddMasterContent({ setOpenDialog }: DialogProps) {
+    const activeProjectionIndex = useMasterStore((s) => s.activeProjectionIndex);
     const currentProjection = useMemo(() => {
-        return useMasterStore.getState().getActiveProjection();
-    }, []);
+        return useMasterStore.getState().getActiveProjection(activeProjectionIndex);
+    }, [activeProjectionIndex]);
+
+    const [group, setGroup] = useState<string | null>(null);
+    const availableGroups = useMemo(() => {
+        if (!currentProjection?.contents) return [];
+        const groups = new Set<string>();
+        for (const item of currentProjection.contents) {
+            if (item.group) groups.add(item.group);
+        }
+        return Array.from(groups);
+    }, [currentProjection?.contents]);
 
     const [fields, setFields] = useState<React.ReactNode>(<TextInput />);
     const typeChanged = useCallback((value: ContentT["type"]) => {
@@ -220,6 +239,7 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
 
             useMasterStore.getState().setActiveContentIndex(last);
             setOpenDialog(false);
+            setGroup(null);
         },
         [setOpenDialog],
     );
@@ -269,7 +289,31 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
                         <FieldLabel className="gap-0.5" htmlFor="content-group">
                             Group
                         </FieldLabel>
-                        <Input id="content-group" name="group" type="text" placeholder="Group 1" />
+                        <Combobox
+                            items={availableGroups}
+                            value={group ?? ""}
+                            onValueChange={setGroup}
+                        >
+                            <ComboboxInput
+                                id="content-group"
+                                name="group"
+                                value={group ?? ""}
+                                onChange={(e) => setGroup(e.target.value)}
+                                placeholder="Group 1"
+                                showTrigger={availableGroups.length > 0}
+                            />
+                            {availableGroups.length > 0 && (
+                                <ComboboxContent>
+                                    <ComboboxList>
+                                        {(item) => (
+                                            <ComboboxItem key={item} value={item}>
+                                                {item}
+                                            </ComboboxItem>
+                                        )}
+                                    </ComboboxList>
+                                </ComboboxContent>
+                            )}
+                        </Combobox>
                     </Field>
                     <FieldSeparator />
                     {fields}
@@ -311,12 +355,12 @@ function TextInput() {
                 <FieldLabel className="gap-0.5" htmlFor="content-content">
                     Content <span className="text-destructive">*</span>
                 </FieldLabel>
-                <Input
+                <Textarea
                     id="content-content"
                     name="content"
-                    type="text"
                     required
                     placeholder="This is a text content"
+                    className="min-h-25"
                 />
             </Field>
             <CssStylesInput styles={styles} onChange={setStyles} />

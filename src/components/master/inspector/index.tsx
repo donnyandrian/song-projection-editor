@@ -28,6 +28,15 @@ import type { HandleUpdate, InputChanged } from "@/types/inspector";
 import { MediaInput, type ApplyScope, type AreaName } from "@/components/master/media-input";
 import * as mi from "@/const/media-input";
 import { useInspectorStore } from "@/stores/inspector.store";
+import { useMemo } from "react";
+import {
+    Combobox,
+    ComboboxContent,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+} from "@/components/ui/combobox";
+import { Textarea } from "@/components/ui/textarea";
 
 interface InspectorProps {
     children?: React.ReactNode;
@@ -41,7 +50,7 @@ export function Inspector({ children }: InspectorProps) {
 
     const activeProjection = projections[activeProjectionIndex];
     const activeItem = activeProjection?.contents[activeContentIndex];
-    
+
     if (!activeProjection) {
         return (
             <div className="text-muted-foreground flex h-full items-center justify-center p-6 text-center text-sm">
@@ -139,6 +148,7 @@ export function Inspector({ children }: InspectorProps) {
                             activeItem={activeItem}
                             handleUpdate={handleUpdate}
                             applyBatchUpdate={applyBatchUpdate}
+                            activeProjection={activeProjection}
                         />
                         <InspectorBackgroundTab
                             activeItem={activeItem}
@@ -189,12 +199,14 @@ interface TabProps {
 interface ContentTabProps extends TabProps {
     itemKey: string;
     applyBatchUpdate: (assetId: string, scope: ApplyScope, sourceArea: AreaName) => void;
+    activeProjection: ProjectionMasterWithId;
 }
 function InspectorContentTab({
     itemKey,
     activeItem,
     handleUpdate,
     applyBatchUpdate,
+    activeProjection,
 }: ContentTabProps) {
     const typeChanged = (val: "Text" | "Image" | "Video") => {
         handleUpdate((old) => {
@@ -231,6 +243,14 @@ function InspectorContentTab({
         });
     };
 
+    const availableGroups = useMemo(() => {
+        const groups = new Set<string>();
+        for (const item of activeProjection.contents) {
+            if (item.group) groups.add(item.group);
+        }
+        return Array.from(groups);
+    }, [activeProjection.contents]);
+
     return (
         <TabsContent value="content" className="m-0 flex flex-col gap-4">
             <FieldGroup>
@@ -261,11 +281,31 @@ function InspectorContentTab({
 
                 <Field>
                     <FieldLabel>Group</FieldLabel>
-                    <Input
+                    <Combobox
+                        items={availableGroups}
                         value={activeItem.group ?? ""}
-                        onChange={groupChanged}
-                        placeholder="Optional Group"
-                    />
+                        onValueChange={(val) => {
+                            if (val) handleUpdate((old) => ({ ...old, group: val }));
+                        }}
+                    >
+                        <ComboboxInput
+                            value={activeItem.group ?? ""}
+                            onChange={groupChanged}
+                            placeholder="Optional Group"
+                            showTrigger={availableGroups.length > 0}
+                        />
+                        {availableGroups.length > 0 && (
+                            <ComboboxContent>
+                                <ComboboxList>
+                                    {(item) => (
+                                        <ComboboxItem key={item} value={item}>
+                                            {item}
+                                        </ComboboxItem>
+                                    )}
+                                </ComboboxList>
+                            </ComboboxContent>
+                        )}
+                    </Combobox>
                 </Field>
 
                 <FieldSeparator />
@@ -273,10 +313,11 @@ function InspectorContentTab({
                 <Field>
                     <FieldLabel>Content Resource</FieldLabel>
                     {activeItem.type === "Text" || activeItem.type === "Component" ? (
-                        <Input
+                        <Textarea
                             value={typeof activeItem.content === "string" ? activeItem.content : ""}
                             onChange={(e) => contentChanged(e.target.value)}
                             placeholder="Enter text..."
+                            className="min-h-25"
                         />
                     ) : (
                         <MediaInput

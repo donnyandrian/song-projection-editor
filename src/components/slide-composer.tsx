@@ -86,7 +86,7 @@ export const SlideBackgroundComposer = memo(function SlideBackgroundComposer({
         [currentProjection, currentIndex, rawBackground],
         "",
     );
-    const isShowBg = !isTransparent(background)
+    const isShowBg = !isTransparent(background);
 
     const transition = useTransitionStore((s) => s.getTransition(currentProjection, currentIndex));
 
@@ -133,7 +133,10 @@ const SlideComposerContent = memo(
             case "Text":
                 return (
                     <span
-                        className={cn("text-8xl font-bold text-white", content.options?.className)}
+                        className={cn(
+                            "text-8xl font-bold whitespace-pre-line text-white",
+                            content.options?.className,
+                        )}
                         style={{ ...content.options?.style }}
                     >
                         {content.content}
