@@ -42,6 +42,7 @@ export function Editor() {
             <Tabs
                 value={activeTab}
                 onValueChange={setActiveTab}
+                activationMode="manual"
                 className="flex flex-1 flex-col overflow-hidden pt-2"
             >
                 <div className="flex w-full flex-row items-center gap-4 px-4">
