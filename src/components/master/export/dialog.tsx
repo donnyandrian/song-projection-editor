@@ -157,10 +157,6 @@ export function ExportConfigDialog({ type, setOpenDialog }: ExportConfigDialogPr
     const activeProjection = projections[activeProjectionIndex];
     const dialogMeta = useMemo(() => getDialogMeta(type), [type]);
 
-    useEffect(() => {
-        setConfig(defaultExportConfig);
-    }, [type]);
-
     const handleConfigChange = useCallback(
         <K extends keyof ExportConfig>(key: K) =>
             (value: ExportConfig[K]) => {
@@ -191,6 +187,7 @@ export function ExportConfigDialog({ type, setOpenDialog }: ExportConfigDialogPr
 
     return (
         <DialogContent
+            key={type}
             showCloseButton={false}
             className="flex flex-col gap-4 overflow-hidden px-0! py-6 *:px-6 max-md:size-full max-md:max-w-full! md:max-h-[80dvh] md:max-w-[80dvw] lg:max-w-[90dvw]"
         >
