@@ -14,25 +14,34 @@ import {
     FieldDescription,
     FieldGroup,
     FieldLabel,
+    FieldSeparator,
 } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectSeparator,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { exportProjections, type ExportProjectionOptions } from "@/lib/export";
 import { useMasterStore } from "@/stores/master.store";
 import { useProjectionStore } from "@/stores/projection.store";
 import type { ProjectionMasterWithId } from "@/types";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 
 export type ExportDialogType = "all" | "active" | "separate";
 
 export interface ExportConfigDialogProps {
-    type: ExportDialogType;
     setOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 type ExportConfig = Omit<ExportProjectionOptions, "separateFiles">;
 
 const defaultExportConfig: Required<ExportConfig> = {
-    minifiedMetadata: false,
+    minifiedMetadata: true,
     productionMode: false,
 };
 
@@ -77,36 +86,6 @@ function ExportOptionField({
     );
 }
 
-function getDialogMeta(type: ExportDialogType): {
-    title: string;
-    description: string;
-    submitLabel: string;
-} {
-    switch (type) {
-        case "active":
-            return {
-                title: "Export Active Projection",
-                description: "Configure how the active projection should be exported.",
-                submitLabel: "Export Active",
-            };
-        case "separate":
-            return {
-                title: "Export Separate Files",
-                description:
-                    "Configure how all projections should be exported as separate JSON files in a ZIP archive.",
-                submitLabel: "Export Separate",
-            };
-        case "all":
-        default:
-            return {
-                title: "Export All",
-                description:
-                    "Configure how all projections should be exported into a single ZIP archive.",
-                submitLabel: "Export All",
-            };
-    }
-}
-
 function buildFilename(type: ExportDialogType, activeTitle?: string): string {
     switch (type) {
         case "active": {
@@ -148,14 +127,11 @@ function resolveTarget(
     return { targetProjections, separateFiles };
 }
 
-export function ExportConfigDialog({ type, setOpenDialog }: ExportConfigDialogProps) {
-    const projections = useProjectionStore((s) => s.projections);
+export function ExportConfigDialog({ setOpenDialog }: ExportConfigDialogProps) {
     const activeProjectionIndex = useMasterStore((s) => s.activeProjectionIndex);
 
+    const [exportType, setExportType] = useState<ExportDialogType>("all");
     const [config, setConfig] = useState<Required<ExportConfig>>(defaultExportConfig);
-
-    const activeProjection = projections[activeProjectionIndex];
-    const dialogMeta = useMemo(() => getDialogMeta(type), [type]);
 
     const handleConfigChange = useCallback(
         <K extends keyof ExportConfig>(key: K) =>
@@ -169,34 +145,68 @@ export function ExportConfigDialog({ type, setOpenDialog }: ExportConfigDialogPr
     );
 
     const handleExport = useCallback(async () => {
+        const projections = useProjectionStore.getState().projections;
         const { targetProjections, separateFiles } = resolveTarget(
-            type,
+            exportType,
             projections,
             activeProjectionIndex,
         );
 
         if (targetProjections.length === 0) return;
 
-        await exportProjections(targetProjections, buildFilename(type, activeProjection?.title), {
-            separateFiles,
-            ...config,
-        });
+        const activeProjection = projections[activeProjectionIndex];
+        await exportProjections(
+            targetProjections,
+            buildFilename(exportType, activeProjection?.title),
+            {
+                separateFiles,
+                ...config,
+            },
+        );
 
         setOpenDialog(false);
-    }, [activeProjection, activeProjectionIndex, config, projections, setOpenDialog, type]);
+    }, [activeProjectionIndex, config, exportType, setOpenDialog]);
 
     return (
         <DialogContent
-            key={type}
             showCloseButton={false}
             className="flex flex-col gap-4 overflow-hidden px-0! py-6 *:px-6 max-md:size-full max-md:max-w-full! md:max-h-[80dvh] md:max-w-[80dvw] lg:max-w-[90dvw]"
         >
             <DialogHeader>
-                <DialogTitle>{dialogMeta.title}</DialogTitle>
-                <DialogDescription>{dialogMeta.description}</DialogDescription>
+                <DialogTitle>Export Projections</DialogTitle>
+                <DialogDescription>
+                    Configure how your projections should be exported.
+                </DialogDescription>
             </DialogHeader>
 
             <FieldGroup className="no-scrollbar -my-2 flex-1 overflow-y-auto py-2">
+                <Field orientation="horizontal" className="items-center justify-between gap-3">
+                    <FieldContent>
+                        <FieldLabel>Target mode</FieldLabel>
+                        <FieldDescription>Choose what should be exported.</FieldDescription>
+                    </FieldContent>
+                    <Select
+                        value={exportType}
+                        onValueChange={(v) => setExportType(v as ExportDialogType)}
+                    >
+                        <SelectTrigger className="w-40">
+                            <SelectValue placeholder="Select target" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectItem value="all">All - Single File</SelectItem>
+                                <SelectItem value="separate">All - Separate Files</SelectItem>
+                            </SelectGroup>
+                            <SelectSeparator />
+                            <SelectGroup>
+                                <SelectItem value="active" disabled={activeProjectionIndex < 0}>
+                                    Active Projection
+                                </SelectItem>
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                </Field>
+                <FieldSeparator />
                 <ExportOptionField
                     id="export-minified-metadata"
                     checked={config.minifiedMetadata}
@@ -215,7 +225,7 @@ export function ExportConfigDialog({ type, setOpenDialog }: ExportConfigDialogPr
 
             <DialogFooter className="-mb-6">
                 <DialogClose render={<Button variant="outline">Cancel</Button>} />
-                <Button onClick={() => void handleExport()}>{dialogMeta.submitLabel}</Button>
+                <Button onClick={() => void handleExport()}>Export</Button>
             </DialogFooter>
         </DialogContent>
     );
