@@ -45,7 +45,7 @@ function MasterContent({ id, contents, backgrounds, transitions }: MasterContent
                 value={activeContentIndex.toString()}
                 onValueChange={selectionChanged}
             >
-                <div className="relative flex h-full w-auto flex-col overflow-x-scroll!">
+                <div className="thin-scrollbar relative flex h-full w-auto flex-col overflow-x-auto!">
                     <div className="flex min-h-17 flex-1 flex-col items-start gap-1 py-2">
                         <h4 className="text-muted-foreground sticky left-0 px-4 text-xs select-none">
                             Content
