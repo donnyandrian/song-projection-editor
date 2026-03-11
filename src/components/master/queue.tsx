@@ -1,6 +1,7 @@
 import { IconDropdownButton, IconDropdownMenuItem } from "@/components/core/buttons";
 import { AddMasterContent, AddMasterQueue } from "@/components/master/add/dialog";
 import { DeleteMasterContent, DeleteMasterQueue } from "@/components/master/delete/dialog";
+import { ExportConfigDialog, type ExportDialogType } from "@/components/master/export/dialog";
 import { AlertDialog, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,14 +23,7 @@ import {
 } from "@hugeicons-pro/core-stroke-rounded";
 import { useMemo, useRef, useState } from "react";
 import { DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import {
-    duplContent,
-    duplQueue,
-    exportActive,
-    exportAll,
-    exportSeparate,
-    importFileChange,
-} from "@/lib/queue";
+import { duplContent, duplQueue, importFileChange } from "@/lib/queue";
 
 export function MasterTabs() {
     const projections = useProjectionStore((s) => s.projections);
@@ -246,15 +240,28 @@ export function ImportExportButton() {
     const hasActiveQueue = useMasterStore((s) => s.activeProjectionIndex >= 0);
     const hasProjections = useProjectionStore((s) => s.projections.length > 0);
 
+    const [openDialog, setOpenDialog] = useState(false);
+    const [dialogType, setDialogType] = useState<ExportDialogType>("all");
+
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleImportClick = () => {
         fileInputRef.current?.click();
     };
 
+    const openExportDialog = (type: ExportDialogType) => {
+        setDialogType(type);
+        setOpenDialog(true);
+    };
+
     useShortcut({ key: "I", shift: true }, handleImportClick);
-    useShortcut({ key: "E", shift: true }, exportAll);
-    useShortcut({ key: "P", shift: true }, exportActive);
+    useShortcut({ key: "E", shift: true }, () => openExportDialog("all"));
+    useShortcut({ key: "P", shift: true }, () => openExportDialog("active"));
+
+    const openChanged = (open: boolean) => {
+        useShortcutsStore.getState().toggleShortcuts(!open);
+        setOpenDialog(open);
+    };
 
     return (
         <>
@@ -265,51 +272,66 @@ export function ImportExportButton() {
                 ref={fileInputRef}
                 onChange={importFileChange}
             />
-            <IconDropdownButton
-                size="icon-sm"
-                label="Import/Export"
-                icon={File02Icon}
-                iconStrokeWidth={1.75}
-            >
-                <IconDropdownMenuItem
-                    label={"Import ZIP"}
-                    text="Import Projections"
-                    icon={FileImportIcon}
+            <Dialog open={openDialog} onOpenChange={openChanged}>
+                <IconDropdownButton
+                    size="icon-sm"
+                    label="Import/Export"
+                    icon={File02Icon}
                     iconStrokeWidth={1.75}
-                    accelerator={{ key: "I", shift: true }}
-                    onSelect={handleImportClick}
-                />
-                {hasProjections && (
-                    <>
-                        <DropdownMenuSeparator />
-                        <IconDropdownMenuItem
-                            label={"Export All"}
-                            text="Export All (Single ZIP)"
-                            icon={FileExportIcon}
-                            iconStrokeWidth={1.75}
-                            accelerator={{ key: "E", shift: true }}
-                            onSelect={exportAll}
-                        />
-                        <IconDropdownMenuItem
-                            label={"Export Separate"}
-                            text="Export Separate Files"
-                            icon={Files01Icon}
-                            iconStrokeWidth={1.75}
-                            onSelect={exportSeparate}
-                        />
-                    </>
-                )}
-                {hasActiveQueue && (
+                >
                     <IconDropdownMenuItem
-                        label={"Export Active"}
-                        text="Export Active Projection"
-                        icon={FileViewIcon}
+                        label={"Import ZIP"}
+                        text="Import Projections"
+                        icon={FileImportIcon}
                         iconStrokeWidth={1.75}
-                        accelerator={{ key: "P", shift: true }}
-                        onSelect={exportActive}
+                        accelerator={{ key: "I", shift: true }}
+                        onSelect={handleImportClick}
                     />
-                )}
-            </IconDropdownButton>
+                    {hasProjections && (
+                        <>
+                            <DropdownMenuSeparator />
+                            <DialogTrigger
+                                render={
+                                    <IconDropdownMenuItem
+                                        label={"Export All"}
+                                        text="Export All (Single ZIP)"
+                                        icon={FileExportIcon}
+                                        iconStrokeWidth={1.75}
+                                        accelerator={{ key: "E", shift: true }}
+                                        onSelect={() => setDialogType("all")}
+                                    />
+                                }
+                            />
+                            <DialogTrigger
+                                render={
+                                    <IconDropdownMenuItem
+                                        label={"Export Separate"}
+                                        text="Export Separate Files"
+                                        icon={Files01Icon}
+                                        iconStrokeWidth={1.75}
+                                        onSelect={() => setDialogType("separate")}
+                                    />
+                                }
+                            />
+                        </>
+                    )}
+                    {hasActiveQueue && (
+                        <DialogTrigger
+                            render={
+                                <IconDropdownMenuItem
+                                    label={"Export Active"}
+                                    text="Export Active Projection"
+                                    icon={FileViewIcon}
+                                    iconStrokeWidth={1.75}
+                                    accelerator={{ key: "P", shift: true }}
+                                    onSelect={() => setDialogType("active")}
+                                />
+                            }
+                        />
+                    )}
+                </IconDropdownButton>
+                <ExportConfigDialog type={dialogType} setOpenDialog={setOpenDialog} />
+            </Dialog>
         </>
     );
 }

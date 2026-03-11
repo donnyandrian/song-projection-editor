@@ -48,7 +48,9 @@ export const importFileChange = async (e: React.ChangeEvent<HTMLInputElement>) =
 export const exportAll = () => {
     const projections = useProjectionStore.getState().projections;
     if (projections.length === 0) return;
-    void exportProjections(projections, "projections-all.zip", false);
+    void exportProjections(projections, "projections-all.zip", {
+        separateFiles: false,
+    });
 };
 
 export const exportActive = () => {
@@ -62,12 +64,16 @@ export const exportActive = () => {
 
     // Basic sanitization for the filename
     const safeTitle = activeProjection.title.replace(/[^a-z0-9]/gi, "_").toLowerCase();
-    void exportProjections([activeProjection], `projection-${safeTitle}.zip`, false);
+    void exportProjections([activeProjection], `projection-${safeTitle}.zip`, {
+        separateFiles: false,
+    });
 };
 
 export const exportSeparate = () => {
     const projections = useProjectionStore.getState().projections;
     if (projections.length === 0) return;
 
-    void exportProjections(projections, "projections-separate.zip", true);
+    void exportProjections(projections, "projections-separate.zip", {
+        separateFiles: true,
+    });
 };

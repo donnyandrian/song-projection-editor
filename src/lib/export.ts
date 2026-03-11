@@ -2,17 +2,66 @@ import { zipSync, strToU8 } from "fflate";
 import { useAssetStore } from "@/stores/asset.store";
 import type { ProjectionMasterWithId } from "@/types";
 
+export interface ExportProjectionOptions {
+    separateFiles?: boolean;
+    minifiedMetadata?: boolean;
+    productionMode?: boolean;
+}
+
+type ExportProjectionData = ProjectionMasterWithId;
+
+function stripInheritedProperties(
+    projection: ProjectionMasterWithId,
+    productionMode: boolean,
+): ExportProjectionData {
+    if (!productionMode) {
+        return {
+            ...projection,
+            contents: projection.contents.map((content) => ({ ...content })),
+        };
+    }
+
+    return {
+        ...projection,
+        contents: projection.contents.map((content) => {
+            const nextContent = { ...content };
+
+            if (nextContent.bg === projection.bg) {
+                delete nextContent.bg;
+            }
+
+            if (nextContent.transition === projection.transition) {
+                delete nextContent.transition;
+            }
+
+            return nextContent;
+        }),
+    };
+}
+
+function stringifyProjectionData(
+    data: ExportProjectionData | ExportProjectionData[],
+    minified: boolean,
+) {
+    return JSON.stringify(data, null, minified ? undefined : 2);
+}
+
 export async function exportProjections(
     targetProjections: ProjectionMasterWithId[],
     filename = "export.zip",
-    separateFiles = false,
+    options: ExportProjectionOptions = {},
 ) {
+    const { separateFiles = false, minifiedMetadata = false, productionMode = false } = options;
+
     const assets = useAssetStore.getState().assets;
     const zipData: Record<string, Uint8Array> = {};
     const usedAssetIds = new Set<string>();
+    const exportData = targetProjections.map((projection) =>
+        stripInheritedProperties(projection, productionMode),
+    );
 
     // Identify used assets
-    targetProjections.forEach((proj) => {
+    exportData.forEach((proj) => {
         if (proj.bg && proj.bg.startsWith("asset://")) usedAssetIds.add(proj.bg);
         proj.contents.forEach((content) => {
             if (content.bg && content.bg.startsWith("asset://")) usedAssetIds.add(content.bg);
@@ -35,12 +84,16 @@ export async function exportProjections(
 
     // Add JSON projection data
     if (separateFiles) {
-        targetProjections.forEach((p, i) => {
+        exportData.forEach((p, i) => {
             const safeTitle = p.title.replace(/[^a-z0-9]/gi, "_").toLowerCase();
-            zipData[`projection-${i + 1}-${safeTitle}.json`] = strToU8(JSON.stringify(p, null, 2));
+            zipData[`projection-${i + 1}-${safeTitle}.json`] = strToU8(
+                stringifyProjectionData(p, minifiedMetadata),
+            );
         });
     } else {
-        zipData["projections.json"] = strToU8(JSON.stringify(targetProjections, null, 2));
+        zipData["projections.json"] = strToU8(
+            stringifyProjectionData(exportData, minifiedMetadata),
+        );
     }
 
     // Generate and download
