@@ -2,10 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type * as CT from "@/types/converter";
 
-const spanConverter = ({
-    key,
-    props: { children, ...props } = {},
-}: CT.SpanComponent) => {
+const spanConverter = ({ key, props: { children, ...props } = {} }: CT.SpanComponent) => {
     const processedChildren: React.ReactNode[] = [];
 
     if (children) {
@@ -39,16 +36,10 @@ const converterMap: CT.ConverterMap = {
 export const converter = (content: CT.AllowedComponents) => {
     const key = typeof content === "string" ? "$string" : content.type;
 
-    return (
-        converterMap[key] as (arg: CT.AllowedComponents) => CT.ConverterReturn
-    )(content);
+    return (converterMap[key] as (arg: CT.AllowedComponents) => CT.ConverterReturn)(content);
 };
 
-export const addConverter = <
-    T extends string,
-    P extends object = {},
-    O extends boolean = true,
->(
+export const addConverter = <T extends string, P extends object = {}, O extends boolean = true>(
     type: T,
     converter: (content: CT.BaseComponent<T, P, O>) => CT.ConverterReturn,
 ) => {

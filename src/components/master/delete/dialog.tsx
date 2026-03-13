@@ -62,7 +62,8 @@ export function DeleteMasterContent({ setOpenDialog }: DialogProps) {
             <AlertDialogHeader>
                 <AlertDialogTitle>Delete Content</AlertDialogTitle>
                 <AlertDialogDescription>
-                    Are you sure you want to delete this active content? This action cannot be undone.
+                    Are you sure you want to delete this active content? This action cannot be
+                    undone.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

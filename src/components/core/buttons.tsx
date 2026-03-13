@@ -54,7 +54,11 @@ export const IconButton = memo(function IconButton({
                     aria-label={label}
                     onClick={onClick}
                 >
-                    <HugeiconsIcon icon={icon} strokeWidth={iconStrokeWidth ?? 2} className={iconClassName} />
+                    <HugeiconsIcon
+                        icon={icon}
+                        strokeWidth={iconStrokeWidth ?? 2}
+                        className={iconClassName}
+                    />
                     {text && <span className={textClassName}>{text}</span>}
                 </Button>
             </TooltipTrigger>
