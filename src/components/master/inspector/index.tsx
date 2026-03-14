@@ -28,7 +28,7 @@ import type { HandleUpdate, InputChanged } from "@/types/inspector";
 import { MediaInput, type ApplyScope, type AreaName } from "@/components/master/media-input";
 import * as mi from "@/const/media-input";
 import { useInspectorStore } from "@/stores/inspector.store";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import {
     Combobox,
     ComboboxContent,
@@ -37,6 +37,10 @@ import {
     ComboboxList,
 } from "@/components/ui/combobox";
 import { Textarea } from "@/components/ui/textarea";
+import { useSettingsStore } from "@/stores/settings.store";
+import type { AppSettings } from "@/types/settings";
+import { ButtonGroup } from "@/components/ui/button-group";
+import { Button } from "@/components/ui/button";
 
 interface InspectorProps {
     children?: React.ReactNode;
@@ -50,22 +54,6 @@ export function Inspector({ children }: InspectorProps) {
 
     const activeProjection = projections[activeProjectionIndex];
     const activeItem = activeProjection?.contents[activeContentIndex];
-
-    if (!activeProjection) {
-        return (
-            <div className="text-muted-foreground flex h-full items-center justify-center p-6 text-center text-sm">
-                Select a queue to inspect its properties.
-            </div>
-        );
-    }
-
-    if (!activeItem) {
-        return (
-            <div className="text-muted-foreground flex h-full items-center justify-center p-6 text-center text-sm">
-                Select a node to inspect its properties.
-            </div>
-        );
-    }
 
     const handleUpdateQueue = (
         updater: (old: ProjectionMasterWithId) => ProjectionMasterWithId,
@@ -119,14 +107,29 @@ export function Inspector({ children }: InspectorProps) {
         store.setProjectionsWithIds(newProjections);
     };
 
-    return (
-        <div className="bg-background flex h-full flex-col overflow-hidden">
-            <div className="flex items-center justify-between border-b px-4 py-3">
-                <h3 className="text-muted-foreground text-sm font-medium select-none">Inspector</h3>
-                {children}
-            </div>
+    const renderContent = () => {
+        if (inspectMode === "settings") {
+            return <InspectorSettingsTab />;
+        }
 
-            {inspectMode === "content" ? (
+        if (!activeProjection) {
+            return (
+                <div className="text-muted-foreground flex h-full items-center justify-center p-6 text-center text-sm">
+                    Select a queue to inspect its properties.
+                </div>
+            );
+        }
+
+        if (inspectMode === "content") {
+            if (!activeItem) {
+                return (
+                    <div className="text-muted-foreground flex h-full items-center justify-center p-6 text-center text-sm">
+                        Select a node to inspect its properties.
+                    </div>
+                );
+            }
+
+            return (
                 <Tabs
                     defaultValue="content"
                     activationMode="manual"
@@ -166,15 +169,28 @@ export function Inspector({ children }: InspectorProps) {
                         />
                     </div>
                 </Tabs>
-            ) : (
-                <div className="no-scrollbar relative flex-1 overflow-y-auto p-4">
-                    <InspectorQueueTab
-                        activeProjection={activeProjection}
-                        handleUpdateQueue={handleUpdateQueue}
-                        applyBatchUpdate={applyBatchUpdate}
-                    />
-                </div>
-            )}
+            );
+        }
+
+        // Render queue mode
+        return (
+            <div className="no-scrollbar relative flex-1 overflow-y-auto p-4">
+                <InspectorQueueTab
+                    activeProjection={activeProjection}
+                    handleUpdateQueue={handleUpdateQueue}
+                    applyBatchUpdate={applyBatchUpdate}
+                />
+            </div>
+        );
+    };
+
+    return (
+        <div className="bg-background flex h-full flex-col overflow-hidden">
+            <div className="flex items-center justify-between border-b px-4 py-3">
+                <h3 className="text-muted-foreground text-sm font-medium select-none">Inspector</h3>
+                {children}
+            </div>
+            {renderContent()}
         </div>
     );
 }
@@ -191,6 +207,7 @@ export function InspectMode() {
             <SelectContent className="w-28 min-w-28 **:text-xs">
                 <SelectItem value="queue">Queue</SelectItem>
                 <SelectItem value="content">Content</SelectItem>
+                <SelectItem value="settings">Settings</SelectItem>
             </SelectContent>
         </Select>
     );
@@ -509,6 +526,255 @@ function InspectorQueueTab({
                     </Select>
                 </Field>
             </FieldGroup>
+        </div>
+    );
+}
+
+function InspectorSettingsTab() {
+    const globalSettings = useSettingsStore((s) => s.global);
+    const setSettings = useSettingsStore((s) => s.set);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const json = JSON.parse(event.target?.result as string) as AppSettings;
+                setSettings((state) => {
+                    state.global = json;
+                    state.globalActivator = "server";
+                    Object.assign(state.temp, state.global);
+                });
+            } catch (err) {
+                console.error("Failed to parse settings.json", err);
+            }
+        };
+        reader.readAsText(file);
+        e.target.value = "";
+    };
+
+    const handleExport = () => {
+        const dataStr = JSON.stringify(globalSettings, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "settings.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    return (
+        <div className="no-scrollbar relative flex flex-1 flex-col gap-4 overflow-y-auto">
+            <input
+                type="file"
+                accept=".json"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleImport}
+            />
+            <ButtonGroup className="w-full px-4 pt-3" orientation={"horizontal"}>
+                <Button
+                    variant="outline"
+                    size={"sm"}
+                    className="flex-1"
+                    onClick={() => fileInputRef.current?.click()}
+                >
+                    Load JSON
+                </Button>
+                <Button variant="outline" size={"sm"} className="flex-1" onClick={handleExport}>
+                    Export JSON
+                </Button>
+            </ButtonGroup>
+
+            <Tabs defaultValue="backdrop" className="flex h-full flex-1 flex-col overflow-hidden">
+                <div className="px-4">
+                    <TabsList className="w-full grid-cols-3">
+                        <TabsTrigger value="backdrop" className="flex-1">
+                            Backdrop
+                        </TabsTrigger>
+                        <TabsTrigger value="cover" className="flex-1">
+                            Cover
+                        </TabsTrigger>
+                        <TabsTrigger value="remap" className="flex-1">
+                            Remap
+                        </TabsTrigger>
+                    </TabsList>
+                </div>
+
+                <div className="no-scrollbar relative flex-1 overflow-y-auto p-4">
+                    <TabsContent value="backdrop" className="m-0 flex flex-col gap-4">
+                        <FieldGroup>
+                            <Field>
+                                <FieldLabel>Color</FieldLabel>
+                                <Input
+                                    type="color"
+                                    value={globalSettings.backdrop.color}
+                                    onChange={(e) =>
+                                        setSettings((s) => {
+                                            s.global.backdrop.color = e.target.value;
+                                        })
+                                    }
+                                    className="h-10 cursor-pointer p-1"
+                                />
+                            </Field>
+                        </FieldGroup>
+                    </TabsContent>
+
+                    <TabsContent value="cover" className="m-0 flex flex-col gap-4">
+                        <FieldGroup>
+                            <Field>
+                                <FieldLabel>Type</FieldLabel>
+                                <Select
+                                    value={globalSettings.cover.type}
+                                    onValueChange={(val: "image" | "video") =>
+                                        setSettings((s) => {
+                                            s.global.cover.type = val;
+                                        })
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="image">Image</SelectItem>
+                                        <SelectItem value="video">Video</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </Field>
+                            <Field>
+                                <FieldLabel>Content Resource</FieldLabel>
+                                <MediaInput
+                                    value={globalSettings.cover.content}
+                                    onChange={(val) =>
+                                        setSettings((s) => {
+                                            s.global.cover.content = val;
+                                        })
+                                    }
+                                    onUploadApply={(assetId) =>
+                                        setSettings((s) => {
+                                            s.global.cover.content = assetId;
+                                        })
+                                    }
+                                    areaName={mi.COVER_AREANAME}
+                                    accept={
+                                        globalSettings.cover.type === "image"
+                                            ? mi.IMAGE_ACCEPT
+                                            : mi.VIDEO_ACCEPT
+                                    }
+                                    placeholder="URL or Media Input"
+                                />
+                            </Field>
+                            <Field>
+                                <FieldLabel>Scale Strategy</FieldLabel>
+                                <Select
+                                    value={globalSettings.cover.scaleStrategy}
+                                    onValueChange={(val: "fit" | "fill") =>
+                                        setSettings((s) => {
+                                            s.global.cover.scaleStrategy = val;
+                                        })
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="fit">Fit</SelectItem>
+                                        <SelectItem value="fill">Fill</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </Field>
+                        </FieldGroup>
+                    </TabsContent>
+
+                    <TabsContent value="remap" className="m-0 flex flex-col gap-4">
+                        <FieldGroup>
+                            <Field>
+                                <FieldLabel>Screen Resolution</FieldLabel>
+                                <div className="flex gap-2">
+                                    <Input
+                                        type="number"
+                                        placeholder="Width"
+                                        value={globalSettings.remap.screenResolution.width}
+                                        onChange={(e) =>
+                                            setSettings((s) => {
+                                                s.global.remap.screenResolution.width = Number(
+                                                    e.target.value,
+                                                );
+                                            })
+                                        }
+                                    />
+                                    <Input
+                                        type="number"
+                                        placeholder="Height"
+                                        value={globalSettings.remap.screenResolution.height}
+                                        onChange={(e) =>
+                                            setSettings((s) => {
+                                                s.global.remap.screenResolution.height = Number(
+                                                    e.target.value,
+                                                );
+                                            })
+                                        }
+                                    />
+                                </div>
+                            </Field>
+                            <Field>
+                                <FieldLabel>Content Resolution</FieldLabel>
+                                <div className="flex gap-2">
+                                    <Input
+                                        type="number"
+                                        placeholder="Width"
+                                        value={globalSettings.remap.contentResolution.width}
+                                        onChange={(e) =>
+                                            setSettings((s) => {
+                                                s.global.remap.contentResolution.width = Number(
+                                                    e.target.value,
+                                                );
+                                            })
+                                        }
+                                    />
+                                    <Input
+                                        type="number"
+                                        placeholder="Height"
+                                        value={globalSettings.remap.contentResolution.height}
+                                        onChange={(e) =>
+                                            setSettings((s) => {
+                                                s.global.remap.contentResolution.height = Number(
+                                                    e.target.value,
+                                                );
+                                            })
+                                        }
+                                    />
+                                </div>
+                            </Field>
+                            <Field>
+                                <FieldLabel>Scale Strategy</FieldLabel>
+                                <Select
+                                    value={globalSettings.remap.scaleStrategy}
+                                    onValueChange={(val: "fit" | "fill") =>
+                                        setSettings((s) => {
+                                            s.global.remap.scaleStrategy = val;
+                                        })
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="fit">Fit</SelectItem>
+                                        <SelectItem value="fill">Fill</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </Field>
+                        </FieldGroup>
+                    </TabsContent>
+                </div>
+            </Tabs>
         </div>
     );
 }

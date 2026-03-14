@@ -25,7 +25,7 @@ import { getFileNameFromId } from "@/lib/import";
 import { useShortcutsStore } from "@/stores/shortcuts.store";
 
 export type ApplyScope = "single" | "area" | "all";
-export type AreaName = "content" | "background";
+export type AreaName = "content" | "background" | "cover";
 
 interface MediaInputProps {
     value: string;

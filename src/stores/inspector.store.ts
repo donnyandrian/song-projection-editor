@@ -1,11 +1,13 @@
 import { create } from "zustand";
 
+type InspectorMode = "queue" | "content" | "settings";
+
 interface InspectorState {
-    mode: "queue" | "content";
+    mode: InspectorMode;
 }
 
 interface InspectorActions {
-    setMode: (mode: "queue" | "content") => void;
+    setMode: (mode: InspectorMode) => void;
 }
 
 type InspectorStore = InspectorState & InspectorActions;

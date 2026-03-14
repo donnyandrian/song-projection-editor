@@ -1,11 +1,13 @@
 import { zipSync, strToU8 } from "fflate";
 import { useAssetStore } from "@/stores/asset.store";
 import type { ProjectionMasterWithId } from "@/types";
+import { useSettingsStore } from "@/stores/settings.store";
 
 export interface ExportProjectionOptions {
     separateFiles?: boolean;
     minifiedMetadata?: boolean;
     productionMode?: boolean;
+    includeSettings?: boolean;
 }
 
 type ExportProjectionData = ProjectionMasterWithId;
@@ -51,7 +53,12 @@ export async function exportProjections(
     filename = "export.zip",
     options: ExportProjectionOptions = {},
 ) {
-    const { separateFiles = false, minifiedMetadata = false, productionMode = false } = options;
+    const {
+        separateFiles = false,
+        minifiedMetadata = false,
+        productionMode = false,
+        includeSettings = false,
+    } = options;
 
     const assets = useAssetStore.getState().assets;
     const zipData: Record<string, Uint8Array> = {};
@@ -93,6 +100,13 @@ export async function exportProjections(
     } else {
         zipData["projections.json"] = strToU8(
             stringifyProjectionData(exportData, minifiedMetadata),
+        );
+    }
+
+    if (includeSettings) {
+        const settings = useSettingsStore.getState().global;
+        zipData["settings.json"] = strToU8(
+            JSON.stringify(settings, null, minifiedMetadata ? undefined : 2),
         );
     }
 

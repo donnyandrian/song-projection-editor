@@ -43,6 +43,7 @@ type ExportConfig = Omit<ExportProjectionOptions, "separateFiles">;
 const defaultExportConfig: Required<ExportConfig> = {
     minifiedMetadata: true,
     productionMode: false,
+    includeSettings: true,
 };
 
 interface ExportOptionFieldProps {
@@ -207,6 +208,13 @@ export function ExportConfigDialog({ setOpenDialog }: ExportConfigDialogProps) {
                     </Select>
                 </Field>
                 <FieldSeparator />
+                <ExportOptionField
+                    id="export-include-settings"
+                    checked={config.includeSettings}
+                    label="Include settings.json"
+                    description="Include the global app configuration along with your exported projections."
+                    onCheckedChange={handleConfigChange("includeSettings")}
+                />
                 <ExportOptionField
                     id="export-minified-metadata"
                     checked={config.minifiedMetadata}

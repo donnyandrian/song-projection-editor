@@ -8,4 +8,13 @@ const BACKGROUND_AREANAME = "background" satisfies AreaName;
 
 const CONTENT_AREANAME = "content" satisfies AreaName;
 
-export { IMAGE_ACCEPT, VIDEO_ACCEPT, BACKGROUND_ACCEPT, BACKGROUND_AREANAME, CONTENT_AREANAME };
+const COVER_AREANAME = "cover" satisfies AreaName;
+
+export {
+    IMAGE_ACCEPT,
+    VIDEO_ACCEPT,
+    BACKGROUND_ACCEPT,
+    BACKGROUND_AREANAME,
+    CONTENT_AREANAME,
+    COVER_AREANAME,
+};
