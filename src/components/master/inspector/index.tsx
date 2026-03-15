@@ -41,6 +41,8 @@ import { useSettingsStore } from "@/stores/settings.store";
 import type { AppSettings } from "@/types/settings";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Button } from "@/components/ui/button";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Cancel01Icon } from "@hugeicons-pro/core-stroke-rounded";
 
 interface InspectorProps {
     children?: React.ReactNode;
@@ -249,11 +251,13 @@ function InspectorContentTab({
     };
 
     const nameChanged: InputChanged = (e) => {
-        handleUpdate((old) => ({ ...old, name: e.target.value }));
+        // Fallback to undefined if the string is empty
+        handleUpdate((old) => ({ ...old, name: e.target.value || undefined }));
     };
 
     const groupChanged: InputChanged = (e) => {
-        handleUpdate((old) => ({ ...old, group: e.target.value }));
+        // Fallback to undefined if the string is empty
+        handleUpdate((old) => ({ ...old, group: e.target.value || undefined }));
     };
 
     const contentChanged = (val: string) => {
@@ -306,7 +310,8 @@ function InspectorContentTab({
                         items={availableGroups}
                         value={activeItem.group ?? ""}
                         onValueChange={(val) => {
-                            if (val) handleUpdate((old) => ({ ...old, group: val }));
+                            // Fallback to undefined if the string is empty
+                            handleUpdate((old) => ({ ...old, group: val || undefined }));
                         }}
                     >
                         <ComboboxInput
@@ -451,6 +456,14 @@ function InspectorQueueTab({
     handleUpdateQueue: (updater: (old: ProjectionMasterWithId) => ProjectionMasterWithId) => void;
     applyBatchUpdate: (assetId: string, scope: ApplyScope, sourceArea: AreaName) => void;
 }) {
+    const availableGroups = useMemo(() => {
+        const groups = new Set<string>();
+        for (const item of activeProjection.contents) {
+            groups.add(item.group || "");
+        }
+        return Array.from(groups);
+    }, [activeProjection.contents]);
+
     const titleChanged: InputChanged = (e) => {
         handleUpdateQueue((old) => ({ ...old, title: e.target.value }));
     };
@@ -471,6 +484,38 @@ function InspectorQueueTab({
             ...old,
             transition: val,
         }));
+    };
+
+    const addLoopQueue = () => {
+        handleUpdateQueue((old) => ({
+            ...old,
+            loopQueue: [...(old.loopQueue || []), { group: 1 }],
+        }));
+    };
+
+    const updateLoopQueueType = (index: number, type: "group" | "item") => {
+        handleUpdateQueue((old) => {
+            const newLoopQueue = [...(old.loopQueue || [])];
+            newLoopQueue[index] = type === "group" ? { group: 1 } : { item: 1 };
+            return { ...old, loopQueue: newLoopQueue };
+        });
+    };
+
+    const updateLoopQueueValue = (index: number, type: "group" | "item", value: string) => {
+        handleUpdateQueue((old) => {
+            const newLoopQueue = [...(old.loopQueue || [])];
+            const numValue = parseInt(value, 10);
+            newLoopQueue[index] = type === "group" ? { group: numValue } : { item: numValue };
+            return { ...old, loopQueue: newLoopQueue };
+        });
+    };
+
+    const removeLoopQueue = (index: number) => {
+        handleUpdateQueue((old) => {
+            const newLoopQueue = [...(old.loopQueue || [])];
+            newLoopQueue.splice(index, 1);
+            return { ...old, loopQueue: newLoopQueue };
+        });
     };
 
     return (
@@ -524,6 +569,76 @@ function InspectorQueueTab({
                             </SelectGroup>
                         </SelectContent>
                     </Select>
+                </Field>
+
+                <Field>
+                    <FieldLabel>Loop Queue</FieldLabel>
+                    <div className="flex flex-col gap-2">
+                        {activeProjection.loopQueue?.map((loop, index) => {
+                            const isGroup = loop.group !== undefined;
+                            const type = isGroup ? "group" : "item";
+                            const value = isGroup ? loop.group : loop.item;
+
+                            return (
+                                <div key={index} className="flex items-center gap-2">
+                                    <ButtonGroup className="w-full">
+                                        <Select
+                                            value={type}
+                                            onValueChange={(val: "group" | "item") =>
+                                                updateLoopQueueType(index, val)
+                                            }
+                                        >
+                                            <SelectTrigger className="w-25">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="group">Group</SelectItem>
+                                                <SelectItem value="item">Item</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <Select
+                                            value={String(value)}
+                                            onValueChange={(val) =>
+                                                updateLoopQueueValue(index, type, val)
+                                            }
+                                        >
+                                            <SelectTrigger className="flex-1">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {isGroup
+                                                    ? availableGroups.map((g, i) => (
+                                                          <SelectItem key={g} value={String(i + 1)}>
+                                                              {g || "Untitled Group"}
+                                                          </SelectItem>
+                                                      ))
+                                                    : activeProjection.contents.map((item, i) => (
+                                                          <SelectItem key={i} value={String(i + 1)}>
+                                                              {item.name || `Item ${i + 1}`}
+                                                          </SelectItem>
+                                                      ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </ButtonGroup>
+
+                                    <Button
+                                        type="button"
+                                        variant={"ghost"}
+                                        size={"icon"}
+                                        className="text-muted-foreground hover:text-destructive px-2! py-0"
+                                        aria-label={"Remove"}
+                                        onClick={() => removeLoopQueue(index)}
+                                    >
+                                        <span className="sr-only">Remove</span>
+                                        <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2.25} />
+                                    </Button>
+                                </div>
+                            );
+                        })}
+                        <Button variant="outline" size="sm" onClick={addLoopQueue}>
+                            Add Loop
+                        </Button>
+                    </div>
                 </Field>
             </FieldGroup>
         </div>
