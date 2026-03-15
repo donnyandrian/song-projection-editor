@@ -78,7 +78,7 @@ export function AddMasterQueue({ setOpenDialog }: DialogProps) {
             const data = new FormData(ev.currentTarget);
 
             const id = useProjectionStore.getState().addProjection({
-                title: data.get("title") as string,
+                title: (data.get("title") as string).trim(),
                 bg: data.get("background") as string,
                 transition: data.get("transition") as ProjectionTransition,
                 contents: [],
@@ -114,6 +114,8 @@ export function AddMasterQueue({ setOpenDialog }: DialogProps) {
                             type="text"
                             required
                             placeholder="Master 1"
+                            onChange={(e) => (e.target.value = e.target.value.trimStart())}
+                            onBlur={(e) => (e.target.value = e.target.value.trim())}
                         />
                     </Field>
                     <Field>
@@ -283,7 +285,14 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
                         <FieldLabel className="gap-0.5" htmlFor="content-name">
                             Name
                         </FieldLabel>
-                        <Input id="content-name" name="name" type="text" placeholder="Content 1" />
+                        <Input
+                            id="content-name"
+                            name="name"
+                            type="text"
+                            placeholder="Content 1"
+                            onChange={(e) => (e.target.value = e.target.value.trimStart())}
+                            onBlur={(e) => (e.target.value = e.target.value.trim())}
+                        />
                     </Field>
                     <Field>
                         <FieldLabel className="gap-0.5" htmlFor="content-group">
@@ -292,13 +301,14 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
                         <Combobox
                             items={availableGroups}
                             value={group ?? ""}
-                            onValueChange={setGroup}
+                            onValueChange={(val) => setGroup(val?.trim() || null)}
                         >
                             <ComboboxInput
                                 id="content-group"
                                 name="group"
                                 value={group ?? ""}
-                                onChange={(e) => setGroup(e.target.value)}
+                                onChange={(e) => setGroup(e.target.value.trimStart() || null)}
+                                onBlur={(e) => setGroup(e.target.value.trim() || null)}
                                 placeholder="Group 1"
                                 showTrigger={availableGroups.length > 0}
                             />

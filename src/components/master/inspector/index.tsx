@@ -43,6 +43,7 @@ import { ButtonGroup } from "@/components/ui/button-group";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon } from "@hugeicons-pro/core-stroke-rounded";
+import { TransformedInput } from "@/components/core/transformed-input";
 
 interface InspectorProps {
     children?: React.ReactNode;
@@ -297,9 +298,10 @@ function InspectorContentTab({
 
                 <Field>
                     <FieldLabel>Name</FieldLabel>
-                    <Input
+                    <TransformedInput
                         value={activeItem.name ?? ""}
                         onChange={nameChanged}
+                        transformer={(val) => val.trim()}
                         placeholder="Optional Name"
                     />
                 </Field>
@@ -311,10 +313,17 @@ function InspectorContentTab({
                         value={activeItem.group ?? ""}
                         onValueChange={(val) => {
                             // Fallback to undefined if the string is empty
-                            handleUpdate((old) => ({ ...old, group: val || undefined }));
+                            handleUpdate((old) => ({ ...old, group: val?.trim() || undefined }));
                         }}
                     >
                         <ComboboxInput
+                            render={
+                                <TransformedInput
+                                    transformer={(val) => val.trim()}
+                                    data-slot="input-group-control"
+                                    className="flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 dark:bg-transparent"
+                                />
+                            }
                             value={activeItem.group ?? ""}
                             onChange={groupChanged}
                             placeholder="Optional Group"
@@ -468,11 +477,9 @@ function InspectorQueueTab({
         handleUpdateQueue((old) => ({ ...old, title: e.target.value }));
     };
 
-    const titleBlurred = () => {
+    const titleBlurred = (e: React.FocusEvent<HTMLInputElement>) => {
         // Enforce a fallback if the title is left completely empty
-        if (!activeProjection.title?.trim()) {
-            handleUpdateQueue((old) => ({ ...old, title: "Untitled Master" }));
-        }
+        handleUpdateQueue((old) => ({ ...old, title: e.target.value.trim() || "Untitled Master" }));
     };
 
     const backgroundChanged = (val: string) => {
@@ -523,9 +530,10 @@ function InspectorQueueTab({
             <FieldGroup>
                 <Field>
                     <FieldLabel>Queue Title</FieldLabel>
-                    <Input
+                    <TransformedInput
                         value={activeProjection.title}
                         onChange={titleChanged}
+                        transformer={(v) => v.trim() || "Untitled Master"}
                         onBlur={titleBlurred}
                         placeholder="Master 1"
                         required

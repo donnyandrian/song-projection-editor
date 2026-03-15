@@ -38,7 +38,7 @@ function Node(props: NodeProps) {
                             className="size-3.5 shrink-0"
                             strokeWidth={2.25}
                         />
-                        <span className="truncate text-sm">{props.label ?? "Item"}</span>
+                        <span className="truncate text-sm">{props.label || "Item"}</span>
                     </div>
                 </FieldContent>
                 <RadioGroupItem
