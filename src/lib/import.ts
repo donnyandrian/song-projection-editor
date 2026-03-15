@@ -31,6 +31,8 @@ export async function importProjectionsZip(zipFile: File) {
     // Read all JSON files directly without modifying references
     for (const [path, uint8Array] of Object.entries(unzipped)) {
         if (path.endsWith(".json") && !path.startsWith("assets/")) {
+            if (path.endsWith("settings.json")) continue;
+
             const data = JSON.parse(strFromU8(uint8Array));
             const projectionsData = Array.isArray(data) ? data : [data];
             importedProjections.push(...(projectionsData as ProjectionMasterWithId[]));
