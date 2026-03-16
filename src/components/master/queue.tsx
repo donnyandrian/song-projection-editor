@@ -1,6 +1,10 @@
 import { IconDropdownButton, IconDropdownMenuItem } from "@/components/core/buttons";
 import { AddMasterContent, AddMasterQueue } from "@/components/master/add/dialog";
-import { DeleteMasterContent, DeleteMasterQueue } from "@/components/master/delete/dialog";
+import {
+    ClearEditorDialog,
+    DeleteMasterContent,
+    DeleteMasterQueue,
+} from "@/components/master/delete/dialog";
 import { ExportConfigDialog } from "@/components/master/export/dialog";
 import { AlertDialog, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
@@ -18,6 +22,7 @@ import {
     FileImportIcon,
     KeyframesDoubleIcon,
     Layers01Icon,
+    Refresh01Icon,
 } from "@hugeicons-pro/core-stroke-rounded";
 import { useMemo, useRef, useState } from "react";
 import { DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -116,14 +121,12 @@ export function AddMasterButton() {
 
 export function DeleteMasterButton() {
     const [openDialog, setOpenDialog] = useState(false);
-    const [dialogType, setDialogType] = useState<"queue" | "content">("queue");
+    const [dialogType, setDialogType] = useState<"queue" | "content" | "all">("queue");
 
     const dialogContent = useMemo(() => {
-        return dialogType === "queue" ? (
-            <DeleteMasterQueue setOpenDialog={setOpenDialog} />
-        ) : (
-            <DeleteMasterContent setOpenDialog={setOpenDialog} />
-        );
+        if (dialogType === "queue") return <DeleteMasterQueue setOpenDialog={setOpenDialog} />;
+        if (dialogType === "content") return <DeleteMasterContent setOpenDialog={setOpenDialog} />;
+        return <ClearEditorDialog setOpenDialog={setOpenDialog} />;
     }, [dialogType]);
 
     const hasActiveContent = useMasterStore(
@@ -183,6 +186,18 @@ export function DeleteMasterButton() {
                         />
                     </AlertDialogTrigger>
                 )}
+                <DropdownMenuSeparator />
+                <AlertDialogTrigger asChild>
+                    <IconDropdownMenuItem
+                        label={"Clean Editor"}
+                        text="Clean Editor"
+                        icon={Refresh01Icon}
+                        iconStrokeWidth={1.75}
+                        iconClassName="text-destructive"
+                        onSelect={() => setDialogType("all")}
+                        textClassName="text-destructive font-medium"
+                    />
+                </AlertDialogTrigger>
             </IconDropdownButton>
             {dialogContent}
         </AlertDialog>

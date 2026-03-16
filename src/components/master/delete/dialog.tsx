@@ -1,5 +1,6 @@
 import { useProjectionStore } from "@/stores/projection.store";
 import { useMasterStore } from "@/stores/master.store";
+import { useAssetStore } from "@/stores/asset.store";
 import { useCallback } from "react";
 import {
     AlertDialogAction,
@@ -70,6 +71,39 @@ export function DeleteMasterContent({ setOpenDialog }: DialogProps) {
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction variant={"destructive"} onClick={handleDelete}>
                     Delete
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    );
+}
+
+export function ClearEditorDialog({ setOpenDialog }: DialogProps) {
+    const handleDelete = useCallback(() => {
+        // Clear all projections/queues
+        useProjectionStore.getState().setProjections([]);
+
+        // Clear all uploaded media files from memory
+        useAssetStore.getState().clearAssets();
+
+        // Reset the active tab state
+        useMasterStore.getState().setActiveTab("");
+
+        setOpenDialog(false);
+    }, [setOpenDialog]);
+
+    return (
+        <AlertDialogContent size="sm">
+            <AlertDialogHeader>
+                <AlertDialogTitle>Clean Editor</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Are you sure you want to delete all queues, contents, and uploaded media files?
+                    This action cannot be undone.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction variant={"destructive"} onClick={handleDelete}>
+                    Clean Editor
                 </AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>

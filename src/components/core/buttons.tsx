@@ -10,6 +10,7 @@ import {
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useShortcut } from "@/hooks/use-shortcuts";
+import { cn } from "@/lib/utils";
 import type { Accelerator } from "@/types";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import { memo } from "react";
@@ -121,6 +122,7 @@ export const IconDropdownMenuItem = memo(function IconDropdownMenuItem({
     label,
     icon,
     iconStrokeWidth,
+    iconClassName,
     text,
     textClassName,
     onClick,
@@ -132,7 +134,7 @@ export const IconDropdownMenuItem = memo(function IconDropdownMenuItem({
             <HugeiconsIcon
                 icon={icon}
                 strokeWidth={iconStrokeWidth ?? 2}
-                className="text-foreground"
+                className={cn("text-foreground", iconClassName)}
             />
             <span className={textClassName}>{text}</span>
 
