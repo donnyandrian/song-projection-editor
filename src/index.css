@@ -25,6 +25,20 @@
     --text-shadow-hard-md: 0 4px 0 rgb(0, 0, 0 / 0.25);
     --text-shadow-hard-lg: 0 6px 0 rgb(0, 0, 0 / 0.25);
 
+    --text-shadow-xl:
+        0px 1px 2px rgb(0 0 0 / 0.1), 0px 3px 2px rgb(0 0 0 / 0.1), 0px 5px 2px rgb(0 0 0 / 0.1),
+        0px 7px 2px rgb(0 0 0 / 0.1), 0px 8px 8px rgb(0 0 0 / 0.1), 0px 12px 8px rgb(0 0 0 / 0.1);
+
+    --animate-text-background: text-background 1.5s linear forwards;
+    @keyframes text-background {
+        0% {
+            background-color: transparent;
+        }
+        100% {
+            background-color: var(--color-black);
+        }
+    }
+
     --color-xellanix-50: var(--xellanix-50);
     --color-xellanix-100: var(--xellanix-100);
     --color-xellanix-200: var(--xellanix-200);
@@ -249,4 +263,51 @@
     scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
     -ms-overflow-style: auto;
     -webkit-overflow-scrolling: touch;
+}
+
+@utility geologica-base {
+    @apply text-center!;
+    @apply mx-64!;
+}
+
+@utility geologica {
+    @apply font-geologica! [font-variation-settings:'slnt'_0,'CRSV'_1,'SHRP'_0]!;
+}
+
+@utility geologica-italic {
+    @apply geologica-base;
+    @apply font-geologica! [font-variation-settings:'slnt'_-10,'CRSV'_1,'SHRP'_0]!;
+    @apply font-black! uppercase!;
+}
+
+@utility song-title {
+    @apply geologica-italic;
+    @apply text-[10rem]! leading-[1.125];
+}
+@utility song-lyric {
+    @apply geologica-italic;
+    @apply text-9xl! leading-[1.125];
+}
+@utility section-title {
+    @apply geologica geologica-base;
+    @apply text-9xl! leading-[1.125] font-bold;
+}
+
+@utility outline-shadow {
+    --outline-shadow-size: 4px;
+    --outline-shadow-size-r: calc(var(--outline-shadow-size) * -1);
+
+    --outline-shadow-color: oklch(0.8986 0.0557 99.55);
+
+    text-shadow:
+    /* Top, Right, Bottom, Left */
+        0 var(--outline-shadow-size-r) 0 var(--outline-shadow-color),
+        var(--outline-shadow-size) 0 0 var(--outline-shadow-color),
+        0 var(--outline-shadow-size) 0 var(--outline-shadow-color),
+        var(--outline-shadow-size-r) 0 0 var(--outline-shadow-color),
+        /* Top-Left, Top-Right, Bottom-Right, Bottom-Left */ var(--outline-shadow-size-r)
+            var(--outline-shadow-size-r) 0 var(--outline-shadow-color),
+        var(--outline-shadow-size) var(--outline-shadow-size-r) 0 var(--outline-shadow-color),
+        var(--outline-shadow-size) var(--outline-shadow-size) 0 var(--outline-shadow-color),
+        var(--outline-shadow-size-r) var(--outline-shadow-size) 0 var(--outline-shadow-color);
 }

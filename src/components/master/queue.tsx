@@ -1,5 +1,5 @@
 import { IconDropdownButton, IconDropdownMenuItem } from "@/components/core/buttons";
-import { AddMasterContent, AddMasterQueue } from "@/components/master/add/dialog";
+import { AddMasterContent, AddMasterQueue, AddSongQueue } from "@/components/master/add/dialog";
 import {
     ClearEditorDialog,
     DeleteMasterContent,
@@ -46,14 +46,18 @@ export function MasterTabs() {
 
 export function AddMasterButton() {
     const [openDialog, setOpenDialog] = useState(false);
-    const [dialogType, setDialogType] = useState<"queue" | "content">("queue");
+    const [dialogType, setDialogType] = useState<"song" | "queue" | "content">("song");
 
     const dialogContent = useMemo(() => {
-        return dialogType === "queue" ? (
-            <AddMasterQueue setOpenDialog={setOpenDialog} />
-        ) : (
-            <AddMasterContent setOpenDialog={setOpenDialog} />
-        );
+        switch (dialogType) {
+            case "song":
+                return <AddSongQueue setOpenDialog={setOpenDialog} />;
+            case "queue":
+                return <AddMasterQueue setOpenDialog={setOpenDialog} />;
+            case "content":
+            default:
+                return <AddMasterContent setOpenDialog={setOpenDialog} />;
+        }
     }, [dialogType]);
 
     const hasActiveQueue = useMasterStore((s) => s.activeProjectionIndex >= 0);
@@ -66,6 +70,10 @@ export function AddMasterButton() {
     });
     useShortcut({ key: "a", shift: true }, () => {
         setDialogType("queue");
+        setOpenDialog(true);
+    });
+    useShortcut({ key: "a", alt: true }, () => {
+        setDialogType("song");
         setOpenDialog(true);
     });
 
@@ -82,6 +90,22 @@ export function AddMasterButton() {
                 icon={Add01Icon}
                 iconStrokeWidth={2.25}
             >
+                <DialogTrigger
+                    render={
+                        <IconDropdownMenuItem
+                            label={"Add Song"}
+                            text="Song"
+                            icon={KeyframesDoubleIcon}
+                            iconStrokeWidth={1.75}
+                            onSelect={() => setDialogType("song")}
+                            accelerator={{
+                                key: "A",
+                                alt: true,
+                            }}
+                        />
+                    }
+                />
+                <DropdownMenuSeparator />
                 <DialogTrigger
                     render={
                         <IconDropdownMenuItem

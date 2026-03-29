@@ -31,6 +31,8 @@ import {
     ComboboxList,
 } from "@/components/ui/combobox";
 import { Textarea } from "@/components/ui/textarea";
+import { SongTitleMemo } from "@/components/core/song_title";
+import { convertReactToJson } from "@/lib/component-converter";
 
 interface DialogProps {
     setOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
@@ -68,6 +70,118 @@ function FormBackgroundMediaInput({
                 tabIndex={-1}
             />
         </div>
+    );
+}
+
+export function AddSongQueue({ setOpenDialog }: DialogProps) {
+    const handleSubmit = useCallback(
+        (ev: React.SubmitEvent<HTMLFormElement>) => {
+            ev.preventDefault();
+            const data = new FormData(ev.currentTarget);
+
+            const titleVal = (data.get("title") as string).trim();
+            const transitionVal = data.get("transition") as ProjectionTransition;
+
+            const content = (
+                <SongTitleMemo
+                    title={titleVal}
+                    author={(data.get("author") as string).trim() || undefined}
+                />
+            );
+
+            const id = useProjectionStore.getState().addProjection({
+                title: titleVal,
+                bg: data.get("background") as string,
+                transition: transitionVal,
+                contents: [
+                    {
+                        type: "Component",
+                        name: titleVal,
+                        content: [content, JSON.stringify(convertReactToJson(content))],
+                        group: "Title",
+                    } as ContentT,
+                ],
+            });
+
+            const { setActiveTab, setActiveContentIndex } = useMasterStore.getState();
+            setActiveTab(id);
+            setActiveContentIndex(0);
+
+            setOpenDialog(false);
+        },
+        [setOpenDialog],
+    );
+
+    return (
+        <DialogContent
+            showCloseButton={false}
+            className="flex flex-col overflow-hidden p-0! max-md:size-full max-md:max-w-full! md:max-h-[80dvh] md:max-w-[80dvw] lg:max-w-[90dvw]"
+        >
+            <form
+                onSubmit={handleSubmit}
+                className="flex h-full flex-col gap-4 overflow-y-hidden py-6 *:px-6"
+            >
+                <DialogHeader>
+                    <DialogTitle>Add Song</DialogTitle>
+                </DialogHeader>
+                <FieldGroup className="no-scrollbar -my-2 flex-1 overflow-y-auto py-2">
+                    <Field>
+                        <FieldLabel className="gap-0.5" htmlFor="queue-title">
+                            Title <span className="text-destructive">*</span>
+                        </FieldLabel>
+                        <Input
+                            id="queue-title"
+                            name="title"
+                            type="text"
+                            required
+                            placeholder="Goodness of God (Live)"
+                            onChange={(e) => (e.target.value = e.target.value.trimStart())}
+                            onBlur={(e) => (e.target.value = e.target.value.trim())}
+                        />
+                    </Field>
+                    <Field>
+                        <FieldLabel className="gap-0.5" htmlFor="queue-author">
+                            Author
+                        </FieldLabel>
+                        <Input
+                            id="queue-author"
+                            name="author"
+                            type="text"
+                            required
+                            placeholder="Bethel Music & Jenn Johnson"
+                            onChange={(e) => (e.target.value = e.target.value.trimStart())}
+                            onBlur={(e) => (e.target.value = e.target.value.trim())}
+                        />
+                    </Field>
+                    <Field>
+                        <FieldLabel className="gap-0.5">
+                            Background <span className="text-destructive">*</span>
+                        </FieldLabel>
+                        <FormBackgroundMediaInput required />
+                    </Field>
+                    <Field>
+                        <FieldLabel className="gap-0.5">
+                            Transition <span className="text-destructive">*</span>
+                        </FieldLabel>
+                        <Select defaultValue="fade" name="transition" required>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Fade" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectItem value="none">None</SelectItem>
+                                    <SelectItem value="fade">Fade</SelectItem>
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+                    </Field>
+                </FieldGroup>
+                <DialogFooter className="-mb-6">
+                    <DialogClose render={<Button variant={"outline"}>Cancel</Button>} />
+                    <Button type="submit">Add</Button>
+                </DialogFooter>
+            </form>
+        </DialogContent>
     );
 }
 
@@ -217,7 +331,20 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
 
                         return {
                             options: {
-                                style,
+                                style: {
+                                    color: "white",
+                                    textAlign: "center",
+                                    marginInline: "calc(var(--spacing) * 64)",
+                                    fontFamily: "geologica",
+                                    fontVariationSettings: "'slnt' -10,'CRSV' 1,'SHRP' 0",
+                                    fontWeight: 900,
+                                    textTransform: "uppercase",
+                                    fontSize: "8rem",
+                                    lineHeight: 1.125,
+                                    textShadow:
+                                        "0px 1px 2px color-mix(in oklab, hsl(212,51%,51%) 100%, transparent), 0px 3px 2px color-mix(in oklab, hsl(212,51%,51%) 100%, transparent), 0px 4px 8px color-mix(in oklab, hsl(212,51%,51%) 100%, transparent)",
+                                    ...style,
+                                },
                             } as Extract<ContentT, { type: "Text" }>["options"],
                         };
                     }

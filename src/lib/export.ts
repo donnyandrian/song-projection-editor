@@ -2,6 +2,7 @@ import { zipSync, strToU8 } from "fflate";
 import { useAssetStore } from "@/stores/asset.store";
 import type { ProjectionMasterWithId } from "@/types";
 import { useSettingsStore } from "@/stores/settings.store";
+import { ProjectionMasterSchema } from "@/schemas/projection";
 
 export interface ExportProjectionOptions {
     separateFiles?: boolean;
@@ -45,7 +46,27 @@ function stringifyProjectionData(
     data: ExportProjectionData | ExportProjectionData[],
     minified: boolean,
 ) {
-    return JSON.stringify(data, null, minified ? undefined : 2);
+    let result: unknown;
+    if (Array.isArray(data)) {
+        result = [];
+        for (const d of data) {
+            const res = ProjectionMasterSchema.safeEncode(d);
+            if (!res.success) {
+                console.error("Invalid object or Schema mismatch. Error: ", res.error);
+                continue;
+            }
+            (result as unknown[]).push(res.data);
+        }
+    } else {
+        result = {};
+        const res = ProjectionMasterSchema.safeEncode(data);
+        if (!res.success) {
+            console.error("Invalid object or Schema mismatch. Error: ", res.error);
+            return "";
+        }
+        result = res.data;
+    }
+    return JSON.stringify(result, null, minified ? undefined : 2);
 }
 
 export async function exportProjections(
