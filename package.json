@@ -7,7 +7,7 @@
     "dev": "bunx --bun vite",
     "build": "tsc -b && bunx --bun vite build",
     "lint": "eslint .",
-    "pretty": "prettier --write .",
+    "pretty": "prettier --write . --end-of-line crlf",
     "preview": "vite preview",
     "deploy": "gh-pages -d dist"
   },

@@ -1,7 +1,8 @@
 import { unzipSync, strFromU8 } from "fflate";
 import { useAssetStore } from "@/stores/asset.store";
 import { useProjectionStore } from "@/stores/projection.store";
-import type { ProjectionMasterWithId } from "@/types";
+import type { ProjectionMaster } from "@/types";
+import { jsonArrayToProjections } from "@/lib/json-to-projection";
 
 export async function importProjectionsZip(zipFile: File) {
     const arrayBuffer = await zipFile.arrayBuffer();
@@ -26,16 +27,15 @@ export async function importProjectionsZip(zipFile: File) {
         }
     }
 
-    const importedProjections: ProjectionMasterWithId[] = [];
+    const importedProjections: ProjectionMaster[] = [];
 
     // Read all JSON files directly without modifying references
     for (const [path, uint8Array] of Object.entries(unzipped)) {
         if (path.endsWith(".json") && !path.startsWith("assets/")) {
             if (path.endsWith("settings.json")) continue;
 
-            const data = JSON.parse(strFromU8(uint8Array));
-            const projectionsData = Array.isArray(data) ? data : [data];
-            importedProjections.push(...(projectionsData as ProjectionMasterWithId[]));
+            const parsed: ProjectionMaster[] = jsonArrayToProjections(strFromU8(uint8Array));
+            importedProjections.push(...parsed);
         }
     }
 

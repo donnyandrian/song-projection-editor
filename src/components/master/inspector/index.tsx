@@ -44,6 +44,7 @@ import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon } from "@hugeicons-pro/core-stroke-rounded";
 import { TransformedInput } from "@/components/core/transformed-input";
+import { ProjectionItemSchema } from "@/schemas/projection";
 
 interface InspectorProps {
     children?: React.ReactNode;
@@ -76,7 +77,9 @@ export function Inspector({ children }: InspectorProps) {
         if (scope === "single") {
             handleUpdate((old) => ({
                 ...old,
-                ...(sourceArea === mi.CONTENT_AREANAME ? { content: assetId } : { bg: assetId }),
+                ...(sourceArea === mi.CONTENT_AREANAME
+                    ? ({ content: assetId } as ProjectionItem)
+                    : { bg: assetId }),
             }));
             return;
         }
@@ -232,7 +235,7 @@ function InspectorContentTab({
     applyBatchUpdate,
     activeProjection,
 }: ContentTabProps) {
-    const typeChanged = (val: "Text" | "Image" | "Video") => {
+    const typeChanged = (val: "Text" | "Image" | "Video" | "Component") => {
         handleUpdate((old) => {
             // Extract the base fields shared across all primitive/text items
             const base = {
@@ -246,6 +249,12 @@ function InspectorContentTab({
 
             if (val === "Text") {
                 return { ...base, type: "Text", options: {} };
+            } else if (val === "Component") {
+                return {
+                    ...base,
+                    type: "Component",
+                    content: ["", ""] as [React.ReactNode, string],
+                };
             }
             return { ...base, type: val };
         });
@@ -263,8 +272,25 @@ function InspectorContentTab({
 
     const contentChanged = (val: string) => {
         handleUpdate((old) => {
-            // Discard Component edits as string, fallback for Primitives and Text
-            if (old.type === "Component") return old;
+            // Component edits as string, fallback for Primitives and Text
+            if (old.type === "Component") {
+                try {
+                    const p = { type: "Component", content: JSON.parse(val) };
+                    const res = ProjectionItemSchema.safeParse(p);
+                    if (!res.success) throw res.error;
+
+                    return {
+                        ...old,
+                        content: [res.data.content[0], val] as [React.ReactNode, string],
+                    };
+                } catch (e) {
+                    console.error("Invalid JSON or Schema mismatch. Error: ", e);
+                    return {
+                        ...old,
+                        content: [old.content[0], val] as [React.ReactNode, string],
+                    };
+                }
+            }
             return { ...old, content: val };
         });
     };
@@ -276,6 +302,45 @@ function InspectorContentTab({
         }
         return Array.from(groups);
     }, [activeProjection.contents]);
+
+    let contentField: React.ReactNode = null;
+    switch (activeItem.type) {
+        case "Component": {
+            contentField = (
+                <Textarea
+                    value={activeItem.content[1]}
+                    onChange={(e) => contentChanged(e.target.value)}
+                    placeholder="Enter component JSON..."
+                    className="min-h-25"
+                />
+            );
+            break;
+        }
+        case "Text":
+            contentField = (
+                <Textarea
+                    value={activeItem.content}
+                    onChange={(e) => contentChanged(e.target.value)}
+                    placeholder="Enter text..."
+                    className="min-h-25"
+                />
+            );
+            break;
+        default:
+            contentField = (
+                <MediaInput
+                    value={typeof activeItem.content === "string" ? activeItem.content : ""}
+                    onChange={contentChanged}
+                    onUploadApply={(assetId, scope) =>
+                        applyBatchUpdate(assetId, scope, mi.CONTENT_AREANAME)
+                    }
+                    areaName={mi.CONTENT_AREANAME}
+                    accept={activeItem.type === "Image" ? mi.IMAGE_ACCEPT : mi.VIDEO_ACCEPT}
+                    placeholder="Filename, URL, or Select Upload"
+                />
+            );
+            break;
+    }
 
     return (
         <TabsContent value="content" className="m-0 flex flex-col gap-4">
@@ -291,6 +356,7 @@ function InspectorContentTab({
                                 <SelectItem value="Text">Text</SelectItem>
                                 <SelectItem value="Image">Image</SelectItem>
                                 <SelectItem value="Video">Video</SelectItem>
+                                <SelectItem value="Component">Component</SelectItem>
                             </SelectGroup>
                         </SelectContent>
                     </Select>
@@ -347,25 +413,7 @@ function InspectorContentTab({
 
                 <Field>
                     <FieldLabel>Content Resource</FieldLabel>
-                    {activeItem.type === "Text" || activeItem.type === "Component" ? (
-                        <Textarea
-                            value={typeof activeItem.content === "string" ? activeItem.content : ""}
-                            onChange={(e) => contentChanged(e.target.value)}
-                            placeholder="Enter text..."
-                            className="min-h-25"
-                        />
-                    ) : (
-                        <MediaInput
-                            value={typeof activeItem.content === "string" ? activeItem.content : ""}
-                            onChange={contentChanged}
-                            onUploadApply={(assetId, scope) =>
-                                applyBatchUpdate(assetId, scope, mi.CONTENT_AREANAME)
-                            }
-                            areaName={mi.CONTENT_AREANAME}
-                            accept={activeItem.type === "Image" ? mi.IMAGE_ACCEPT : mi.VIDEO_ACCEPT}
-                            placeholder="Filename, URL, or Select Upload"
-                        />
-                    )}
+                    {contentField}
                 </Field>
 
                 {activeItem.type === "Text" && (

@@ -143,7 +143,7 @@ const SlideComposerContent = memo(
                     </span>
                 );
             case "Component":
-                return content.content;
+                return content.content[0];
             default:
                 return null;
         }
