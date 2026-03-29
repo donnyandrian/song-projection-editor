@@ -4,7 +4,6 @@ import {
     type SpanComponentSchema,
     type BaseComponent,
 } from "@/schemas/converter";
-import type { ProjectionMaster } from "@/types";
 import type { infer as zInfer } from "zod";
 
 type SpanComponent = zInfer<typeof SpanComponentSchema>;
@@ -21,10 +20,6 @@ type ConverterMap = {
 type AllowedComponents = Parameters<ConverterMap[keyof ConverterMap]>[0];
 type ConverterReturn = React.ReactNode;
 
-type ProjectionMasterJSON = Omit<ProjectionMaster, "contents"> & {
-    contents: AllowedComponents[];
-};
-
 export type {
     BaseComponent,
     SpanComponent,
@@ -32,5 +27,4 @@ export type {
     AllowedComponents,
     ConverterMap,
     ConverterReturn,
-    ProjectionMasterJSON,
 };
