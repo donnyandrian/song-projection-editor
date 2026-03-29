@@ -44,11 +44,7 @@ const ProjectionItemComponentSchema = ProjectionItemBaseSchema.extend({
     type: literal("Component"),
     content: codec(AllowedComponentSchemas(), tuple([custom<React.ReactNode>(), string()]), {
         decode: (json) => [converter(json), JSON.stringify(json)] as [React.ReactNode, string],
-        encode: ([node, str]) => {
-            const res = JSON.stringify(convertReactToJson(node));
-            console.log(res, res === str);
-            return convertReactToJson(node);
-        },
+        encode: ([node]) => convertReactToJson(node),
     }),
 });
 

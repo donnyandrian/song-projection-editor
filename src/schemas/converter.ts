@@ -50,10 +50,7 @@ const _allowedComponentSchemas: (ZodString | BaseComponentObject<any, any>)[] = 
     SpanComponentSchema,
     BrComponentSchema,
 ];
-export const AllowedComponentSchemas = () => {
-    console.log("AllowedComponentSchemas");
-    return union(_allowedComponentSchemas);
-};
+export const AllowedComponentSchemas = () => union(_allowedComponentSchemas);
 export const addSchema = <T extends string, P extends ZodType>(
     schema: BaseComponentObject<T, P>,
 ) => {
