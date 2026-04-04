@@ -31,6 +31,7 @@ import { useMasterStore } from "@/stores/master.store";
 import { useProjectionStore } from "@/stores/projection.store";
 import type { ProjectionMasterWithId } from "@/types";
 import { useCallback, useState } from "react";
+import { sourceUrl, version } from "@/data/export-version";
 
 export type ExportDialogType = "all" | "active" | "separate";
 
@@ -174,7 +175,17 @@ export function ExportConfigDialog({ setOpenDialog }: ExportConfigDialogProps) {
             className="flex flex-col gap-4 overflow-hidden px-0! py-6 *:px-6 max-md:size-full max-md:max-w-full! md:max-h-[80dvh] md:max-w-[80dvw] lg:max-w-[90dvw]"
         >
             <DialogHeader>
-                <DialogTitle>Export Projections</DialogTitle>
+                <DialogTitle>
+                    Export Projections{" "}
+                    <a
+                        className="bg-muted text-muted-foreground hover:text-foreground inline-flex h-5.5 items-center justify-center rounded-sm px-1 font-sans text-sm font-medium no-underline!"
+                        href={sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        {version}
+                    </a>
+                </DialogTitle>
                 <DialogDescription>
                     Configure how your projections should be exported.
                 </DialogDescription>
