@@ -7,7 +7,7 @@ import type { ProjectionMasterWithId } from "@/types";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-export const PROJECTIONS_STORAGE_KEY = "xelanix-projection-editor:projections";
+export const PROJECTIONS_STORAGE_KEY = "xellanix-projection-editor:projections";
 
 // ─── Projections ──────────────────────────────────────────────────────────────
 
