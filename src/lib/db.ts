@@ -11,7 +11,7 @@ class ProjectionEditorDB extends Dexie {
     assets!: Table<StoredAsset, string>;
 
     constructor() {
-        super("xellanix-projection-editor");
+        super("xellanix-song-projection-editor");
         this.version(1).stores({
             // Only index the primary key. All other fields are just stored data.
             assets: "id",
