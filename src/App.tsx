@@ -1,3 +1,4 @@
+import { usePersistence } from "@/hooks/use-persistence";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Viewer } from "@/components/viewer";
@@ -7,6 +8,8 @@ import { useShallow } from "zustand/react/shallow";
 import { GlobalKeyboardListener } from "@/hooks/use-shortcuts";
 
 export default function App() {
+    usePersistence();
+
     return (
         <ResizablePanelGroup orientation="vertical" className="size-full">
             <ResizablePanel defaultSize="55%" minSize="5rem" className="bg-sidebar-accent relative">
