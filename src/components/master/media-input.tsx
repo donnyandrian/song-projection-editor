@@ -23,6 +23,7 @@ import { Upload01Icon } from "@hugeicons-pro/core-stroke-rounded";
 import { useAssetStore } from "@/stores/asset.store";
 import { getFileNameFromId } from "@/lib/import";
 import { useShortcutsStore } from "@/stores/shortcuts.store";
+import { FieldDescription } from "@/components/ui/field";
 
 export type ApplyScope = "single" | "area" | "all";
 export type AreaName = "content" | "background" | "cover";
@@ -157,11 +158,7 @@ export function MediaInput({
                         onChange={handleFileChange}
                     />
                 </div>
-                {accept && (
-                    <span className="text-muted-foreground text-xs font-normal">
-                        Supported formats: {accept}
-                    </span>
-                )}
+                {accept && <FieldDescription>Supported formats: {accept}</FieldDescription>}
             </div>
 
             <Dialog open={isDialogOpen} onOpenChange={openChanged}>

@@ -6,7 +6,13 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Field, FieldGroup, FieldLabel, FieldSeparator } from "@/components/ui/field";
+import {
+    Field,
+    FieldDescription,
+    FieldGroup,
+    FieldLabel,
+    FieldSeparator,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -33,6 +39,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { SongTitleMemo } from "@/components/core/song_title";
 import { convertReactToJson } from "@/lib/component-converter";
+
+type ContentT = ProjectionMaster["contents"][number];
 
 interface DialogProps {
     setOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
@@ -185,6 +193,183 @@ export function AddSongQueue({ setOpenDialog }: DialogProps) {
     );
 }
 
+const LYRICS_PART_PLACEHOLDER = `Item 1, Line 1
+Item 1, Line 2
+
+Item 2`;
+export function AddLyricsPartContent({ setOpenDialog }: DialogProps) {
+    const activeProjectionIndex = useMasterStore((s) => s.activeProjectionIndex);
+    const currentProjection = useMemo(() => {
+        return useMasterStore.getState().getActiveProjection(activeProjectionIndex);
+    }, [activeProjectionIndex]);
+
+    const [group, setGroup] = useState<string | null>(null);
+    const availableGroups = useMemo(() => {
+        if (!currentProjection?.contents) return [];
+        const groups = new Set<string>();
+        for (const item of currentProjection.contents) {
+            if (item.group) groups.add(item.group);
+        }
+        return Array.from(groups);
+    }, [currentProjection?.contents]);
+
+    const handleSubmit = useCallback(
+        (ev: React.SubmitEvent<HTMLFormElement>) => {
+            ev.preventDefault();
+            const data = new FormData(ev.currentTarget);
+
+            const index = useMasterStore.getState().getActiveProjectionIndex();
+            if (index < 0) return;
+
+            const items = (data.get("content") as string)
+                .split("\n\n")
+                .map((s) => s.trim())
+                .filter((s) => s);
+            if (items.length === 0) return;
+
+            const typedData = (() => {
+                let style: Record<string, string> | undefined = undefined;
+                try {
+                    const styleStr = data.get("options-style") as string;
+                    if (styleStr) {
+                        const parsed = JSON.parse(styleStr) as StyleItem[];
+                        if (parsed.length > 0) {
+                            style = {};
+                            parsed.forEach((s) => {
+                                if (s.property && s.value) {
+                                    style![s.property] = s.value;
+                                }
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.error("Failed to parse styles", e);
+                }
+
+                return {
+                    options: {
+                        style: {
+                            color: "white",
+                            textAlign: "center",
+                            marginInline: "calc(var(--spacing) * 64)",
+                            fontFamily: "geologica",
+                            fontVariationSettings: "'slnt' -10,'CRSV' 1,'SHRP' 0",
+                            fontWeight: 900,
+                            textTransform: "uppercase",
+                            fontSize: "8rem",
+                            lineHeight: 1.125,
+                            textShadow:
+                                "0px 1px 2px color-mix(in oklab, hsl(212,51%,51%) 100%, transparent), 0px 3px 2px color-mix(in oklab, hsl(212,51%,51%) 100%, transparent), 0px 4px 8px color-mix(in oklab, hsl(212,51%,51%) 100%, transparent)",
+                            ...style,
+                        },
+                    } as Extract<ContentT, { type: "Text" }>["options"],
+                };
+            })();
+
+            const groupVal = (data.get("group") as string).trim() || undefined;
+            const bgVal = (data.get("background") as string).trim() || undefined;
+            const _tVal = (data.get("transition") as string).trim();
+
+            const contents: ContentT[] = [];
+            for (const item of items) {
+                contents.push({
+                    type: "Text",
+                    content: item,
+                    ...typedData,
+
+                    group: groupVal,
+                    bg: bgVal,
+                    transition: _tVal === "inherit" || !_tVal ? undefined : _tVal,
+                } as ContentT);
+            }
+
+            const last = useProjectionStore.getState().addContents(index, contents);
+
+            useMasterStore.getState().setActiveContentIndex(last);
+            setOpenDialog(false);
+            setGroup(null);
+        },
+        [setOpenDialog],
+    );
+
+    return (
+        <DialogContent
+            showCloseButton={false}
+            className="flex flex-col overflow-hidden p-0! max-md:size-full max-md:max-w-full! md:max-h-[80dvh] md:max-w-[80dvw] lg:max-w-[90dvw]"
+        >
+            <form
+                onSubmit={handleSubmit}
+                className="flex h-full flex-col gap-4 overflow-y-hidden py-6 *:px-6"
+            >
+                <DialogHeader>
+                    <DialogTitle>Add Lyrics Part</DialogTitle>
+                </DialogHeader>
+                <FieldGroup className="no-scrollbar -my-2 flex-1 overflow-y-auto py-2">
+                    <Field>
+                        <FieldLabel className="gap-0.5" htmlFor="content-group">
+                            Group
+                        </FieldLabel>
+                        <Combobox
+                            items={availableGroups}
+                            value={group ?? ""}
+                            onValueChange={(val) => setGroup(val?.trim() || null)}
+                        >
+                            <ComboboxInput
+                                id="content-group"
+                                name="group"
+                                value={group ?? ""}
+                                onChange={(e) => setGroup(e.target.value.trimStart() || null)}
+                                onBlur={(e) => setGroup(e.target.value.trim() || null)}
+                                placeholder="Group 1"
+                                showTrigger={availableGroups.length > 0}
+                            />
+                            {availableGroups.length > 0 && (
+                                <ComboboxContent>
+                                    <ComboboxList>
+                                        {(item) => (
+                                            <ComboboxItem key={item} value={item}>
+                                                {item}
+                                            </ComboboxItem>
+                                        )}
+                                    </ComboboxList>
+                                </ComboboxContent>
+                            )}
+                        </Combobox>
+                    </Field>
+                    <FieldSeparator />
+                    <TextInput
+                        placeholder={LYRICS_PART_PLACEHOLDER}
+                        description="Items are separated by empty line."
+                    />
+                    <Field>
+                        <FieldLabel className="gap-0.5">Background</FieldLabel>
+                        <FormBackgroundMediaInput defaultValue={currentProjection?.bg || ""} />
+                    </Field>
+                    <Field>
+                        <FieldLabel className="gap-0.5">Transition</FieldLabel>
+                        <Select name="transition" defaultValue={"inherit"}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Transition" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectItem value="inherit">Inherit</SelectItem>
+                                    <SelectItem value="none">None</SelectItem>
+                                    <SelectItem value="fade">Fade</SelectItem>
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+                    </Field>
+                </FieldGroup>
+                <DialogFooter className="-mb-6">
+                    <DialogClose render={<Button variant={"outline"}>Cancel</Button>} />
+                    <Button type="submit">Add</Button>
+                </DialogFooter>
+            </form>
+        </DialogContent>
+    );
+}
+
 export function AddMasterQueue({ setOpenDialog }: DialogProps) {
     const handleSubmit = useCallback(
         (ev: React.SubmitEvent<HTMLFormElement>) => {
@@ -264,7 +449,6 @@ export function AddMasterQueue({ setOpenDialog }: DialogProps) {
     );
 }
 
-type ContentT = ProjectionMaster["contents"][number];
 export function AddMasterContent({ setOpenDialog }: DialogProps) {
     const activeProjectionIndex = useMasterStore((s) => s.activeProjectionIndex);
     const currentProjection = useMemo(() => {
@@ -483,7 +667,11 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
     );
 }
 
-function TextInput() {
+interface TextInputProps {
+    placeholder?: string;
+    description?: string;
+}
+function TextInput({ placeholder, description }: TextInputProps) {
     const [styles, setStyles] = useState<StyleItem[]>([]);
 
     return (
@@ -496,9 +684,10 @@ function TextInput() {
                     id="content-content"
                     name="content"
                     required
-                    placeholder="This is a text content"
+                    placeholder={placeholder || "This is a text content"}
                     className="min-h-25"
                 />
+                {description && <FieldDescription>{description}</FieldDescription>}
             </Field>
             <CssStylesInput styles={styles} onChange={setStyles} />
             <input type="hidden" name="options-style" value={JSON.stringify(styles)} />

@@ -34,6 +34,7 @@ interface ProjectionActions {
     deleteProjection: (projectionIndex: number) => string | null;
 
     addContent: (projectionIndex: number, content: ProjectionMaster["contents"][number]) => number;
+    addContents: (projectionIndex: number, contents: ProjectionMaster["contents"]) => number;
     duplicateContent: (projectionIndex: number, contentIndex: number) => number | null;
     updateContent: (
         projectionIndex: number,
@@ -205,7 +206,8 @@ export const useProjectionStore = create<ProjectionStore>((set, get) => ({
         return newId;
     },
 
-    addContent: (projectionIndex, content) => {
+    addContent: (projectionIndex, content) => get().addContents(projectionIndex, [content]),
+    addContents: (projectionIndex, contents) => {
         let last: number = -1;
 
         set((s) => {
@@ -213,7 +215,7 @@ export const useProjectionStore = create<ProjectionStore>((set, get) => ({
 
             // Shallow clone projection and contents to prevent mutable references issues
             const newProjection = { ...p[projectionIndex] };
-            newProjection.contents = [...newProjection.contents, content];
+            newProjection.contents = [...newProjection.contents, ...contents];
 
             p[projectionIndex] = newProjection;
             last = newProjection.contents.length - 1;

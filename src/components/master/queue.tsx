@@ -1,5 +1,10 @@
 import { IconDropdownButton, IconDropdownMenuItem } from "@/components/core/buttons";
-import { AddMasterContent, AddMasterQueue, AddSongQueue } from "@/components/master/add/dialog";
+import {
+    AddLyricsPartContent,
+    AddMasterContent,
+    AddMasterQueue,
+    AddSongQueue,
+} from "@/components/master/add/dialog";
 import {
     ClearEditorDialog,
     DeleteMasterContent,
@@ -22,6 +27,8 @@ import {
     FileImportIcon,
     KeyframesDoubleIcon,
     Layers01Icon,
+    MusicNote03Icon,
+    NoteIcon,
     Refresh01Icon,
 } from "@hugeicons-pro/core-stroke-rounded";
 import { useMemo, useRef, useState } from "react";
@@ -46,12 +53,16 @@ export function MasterTabs() {
 
 export function AddMasterButton() {
     const [openDialog, setOpenDialog] = useState(false);
-    const [dialogType, setDialogType] = useState<"song" | "queue" | "content">("song");
+    const [dialogType, setDialogType] = useState<"song" | "lyrics-part" | "queue" | "content">(
+        "song",
+    );
 
     const dialogContent = useMemo(() => {
         switch (dialogType) {
             case "song":
                 return <AddSongQueue setOpenDialog={setOpenDialog} />;
+            case "lyrics-part":
+                return <AddLyricsPartContent setOpenDialog={setOpenDialog} />;
             case "queue":
                 return <AddMasterQueue setOpenDialog={setOpenDialog} />;
             case "content":
@@ -76,6 +87,10 @@ export function AddMasterButton() {
         setDialogType("song");
         setOpenDialog(true);
     });
+    useShortcut({ key: "p", shift: true }, () => {
+        setDialogType("lyrics-part");
+        setOpenDialog(true);
+    });
 
     const openChanged = (open: boolean) => {
         useShortcutsStore.getState().toggleShortcuts(!open);
@@ -95,7 +110,7 @@ export function AddMasterButton() {
                         <IconDropdownMenuItem
                             label={"Add Song"}
                             text="Song"
-                            icon={KeyframesDoubleIcon}
+                            icon={MusicNote03Icon}
                             iconStrokeWidth={1.75}
                             onSelect={() => setDialogType("song")}
                             accelerator={{
@@ -105,6 +120,23 @@ export function AddMasterButton() {
                         />
                     }
                 />
+                {hasActiveQueue && (
+                    <DialogTrigger
+                        render={
+                            <IconDropdownMenuItem
+                                label={"Add Lyrics Part"}
+                                text="Lyrics Part"
+                                icon={NoteIcon}
+                                iconStrokeWidth={1.75}
+                                onSelect={() => setDialogType("lyrics-part")}
+                                accelerator={{
+                                    key: "P",
+                                    shift: true,
+                                }}
+                            />
+                        }
+                    />
+                )}
                 <DropdownMenuSeparator />
                 <DialogTrigger
                     render={
