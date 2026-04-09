@@ -12,6 +12,9 @@ export default defineConfig({
 		}),
 	],
 	base: "./",
+	esbuild: {
+		keepNames: true,
+	},
 	build: {
 		minify: true,
 		assetsInlineLimit: 0,
