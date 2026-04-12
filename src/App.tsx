@@ -6,9 +6,11 @@ import { Editor } from "@/components/editor";
 import { useMasterStore } from "@/stores/master.store";
 import { useShallow } from "zustand/react/shallow";
 import { GlobalKeyboardListener } from "@/hooks/use-shortcuts";
+import { useConverter } from "@/hooks/use-converter";
 
 export default function App() {
     usePersistence();
+    useConverter();
 
     return (
         <ResizablePanelGroup orientation="vertical" className="size-full">
