@@ -1,5 +1,4 @@
 import { ComplexContainer } from "./complex-container";
-import { addConverter } from "@/lib/component-converter";
 import { cn } from "@/lib/utils";
 import { memo } from "react";
 
@@ -30,21 +29,3 @@ function SongTitle({ title, author, className, titleClassName }: SongTitleProps)
     );
 }
 export const SongTitleMemo = memo(SongTitle);
-
-import { object, string } from "zod";
-// eslint-disable-next-line react-refresh/only-export-components
-export const registerSongTitle = () => {
-    addConverter(
-        "SongTitle",
-        object({
-            title: string(),
-            author: string().optional(),
-            className: string().optional(),
-            titleClassName: string().optional(),
-        }),
-        (content) => {
-            return <SongTitleMemo key={content.key} {...content.props} />;
-        },
-    );
-};
-registerSongTitle();
