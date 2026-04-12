@@ -45,6 +45,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon } from "@hugeicons-pro/core-stroke-rounded";
 import { TransformedInput } from "@/components/core/transformed-input";
 import { ProjectionItemSchema } from "@/schemas/projection";
+import { Switcher } from "@/components/master/inspector/component";
 
 interface InspectorProps {
     children?: React.ReactNode;
@@ -307,12 +308,7 @@ function InspectorContentTab({
     switch (activeItem.type) {
         case "Component": {
             contentField = (
-                <Textarea
-                    value={activeItem.content[1]}
-                    onChange={(e) => contentChanged(e.target.value)}
-                    placeholder="Enter component JSON..."
-                    className="min-h-25"
-                />
+                <Switcher content={activeItem.content[1]} contentChanged={contentChanged} />
             );
             break;
         }
