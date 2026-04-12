@@ -34,7 +34,6 @@ export const SongTitleMemo = memo(SongTitle);
 import { object, string } from "zod";
 // eslint-disable-next-line react-refresh/only-export-components
 export const registerSongTitle = () => {
-    console.log("Registering SongTitle");
     addConverter(
         "SongTitle",
         object({
