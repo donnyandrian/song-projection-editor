@@ -55,6 +55,7 @@ export const addConverter = <T extends string, S extends ZodType>(
     schema: S,
     converter: (content: BaseComponent<T, S>) => CT.ConverterReturn,
 ) => {
+    console.log("Register Converter: ", type);
     addSchema(BaseComponentSchema(type, schema));
     converterMap[type] = converter as any;
 };
