@@ -1,4 +1,5 @@
 import { SongTitleField } from "@/components/master/inspector/component/song-title";
+import { VotumField } from "@/components/master/inspector/component/votum";
 import { Field, FieldGroup } from "@/components/ui/field";
 import {
     Select,
@@ -12,7 +13,54 @@ import { Textarea } from "@/components/ui/textarea";
 import { AllowedComponentSchemas } from "@/schemas/converter";
 import { useMemo, useState } from "react";
 
-type ComponentType = "SongTitle" | "Custom";
+type ComponentType = "SongTitle" | "Votum" | "Custom";
+
+type TypeFunctionReturn<V extends boolean> = V extends true ? string : React.ReactNode;
+type TypeFunction = <V extends boolean>(
+    isNew: V,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    props: any,
+    setActiveType: V extends true ? undefined : (t: ComponentType) => void,
+    contentChanged: (val: string) => void,
+) => TypeFunctionReturn<V>;
+
+const COMPONENT_TYPE_SELECT_OPTIONS: { key: ComponentType; value: string }[] = [
+    { key: "SongTitle", value: "Song Title" },
+    { key: "Votum", value: "Votum" },
+    { key: "Custom", value: "Custom" },
+];
+
+const COMPONENT_TYPE_MAP: Record<string, TypeFunction> = {
+    SongTitle: (isNew, props, setActiveType, contentChanged) => {
+        if (isNew === true) {
+            return JSON.stringify({
+                type: "SongTitle",
+                props: { title: "" },
+            }) as TypeFunctionReturn<typeof isNew>;
+        }
+
+        setActiveType!("SongTitle");
+        return (
+            <SongTitleField contentChanged={contentChanged} {...props} />
+        ) as TypeFunctionReturn<typeof isNew>;
+    },
+    Votum: (isNew, props, setActiveType, contentChanged) => {
+        if (isNew === true) {
+            return JSON.stringify({
+                type: "Votum",
+                props: {
+                    title: "",
+                    content: [],
+                },
+            }) as TypeFunctionReturn<typeof isNew>;
+        }
+
+        setActiveType!("Votum");
+        return (<VotumField contentChanged={contentChanged} {...props} />) as TypeFunctionReturn<
+            typeof isNew
+        >;
+    },
+};
 
 interface SwitcherProps {
     content: string;
@@ -28,13 +76,14 @@ export function Switcher({ content, contentChanged }: SwitcherProps) {
             if (!res.success) throw res.error;
 
             if (typeof res.data !== "string") {
-                switch (res.data.type) {
-                    case "SongTitle": {
-                        setActiveType("SongTitle");
-                        return (
-                            <SongTitleField contentChanged={contentChanged} {...res.data.props} />
-                        );
-                    }
+                const { type: rdType, props: rdProps } = res.data;
+                if (rdType in COMPONENT_TYPE_MAP === true) {
+                    return COMPONENT_TYPE_MAP[rdType](
+                        false,
+                        rdProps,
+                        setActiveType,
+                        contentChanged,
+                    );
                 }
             }
 
@@ -61,15 +110,10 @@ export function Switcher({ content, contentChanged }: SwitcherProps) {
 
     const selectChanged = (v: ComponentType) => {
         setActiveType(v);
-        switch (v) {
-            case "SongTitle": {
-                contentChanged(JSON.stringify({ type: "SongTitle", props: { title: "" } }));
-                break;
-            }
-            default: {
-                contentChanged(JSON.stringify(""));
-                break;
-            }
+        if (v in COMPONENT_TYPE_MAP === true) {
+            contentChanged(COMPONENT_TYPE_MAP[v](true, undefined, undefined, contentChanged));
+        } else {
+            contentChanged(JSON.stringify(""));
         }
     };
 
@@ -85,8 +129,11 @@ export function Switcher({ content, contentChanged }: SwitcherProps) {
                     </SelectTrigger>
                     <SelectContent>
                         <SelectGroup>
-                            <SelectItem value="SongTitle">Song Title</SelectItem>
-                            <SelectItem value="Custom">Custom</SelectItem>
+                            {COMPONENT_TYPE_SELECT_OPTIONS.map((o) => (
+                                <SelectItem key={o.key} value={o.key}>
+                                    {o.value}
+                                </SelectItem>
+                            ))}
                         </SelectGroup>
                     </SelectContent>
                 </Select>
