@@ -31,7 +31,7 @@ export type AreaName = "content" | "background" | "cover";
 interface MediaInputProps {
     value: string;
     onChange: (val: string) => void;
-    onUploadApply: (assetId: string, scope: ApplyScope) => void;
+    onUploadApply?: (assetId: string, scope: ApplyScope) => void; // Called when an asset is uploaded. If it's null, just call onChange
     areaName: AreaName;
     accept?: string;
     placeholder?: string;
@@ -100,8 +100,12 @@ export function MediaInput({
         }
 
         const id = addAsset(file);
-        setPendingAssetId(id);
-        setIsDialogOpen(true);
+        if (onUploadApply) {
+            setPendingAssetId(id);
+            setIsDialogOpen(true);
+        } else {
+            onChange(id);
+        }
 
         // Reset the input so the same file can be uploaded again if needed
         e.target.value = "";
@@ -109,7 +113,7 @@ export function MediaInput({
 
     const handleApply = () => {
         if (pendingAssetId) {
-            onUploadApply(pendingAssetId, selectedScope);
+            onUploadApply?.(pendingAssetId, selectedScope);
         }
         setIsDialogOpen(false);
         setPendingAssetId(null);
