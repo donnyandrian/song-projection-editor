@@ -1,5 +1,6 @@
 import { SongTitleField } from "@/components/master/inspector/component/song-title";
 import { VotumField } from "@/components/master/inspector/component/votum";
+import { WelcomePageField } from "@/components/master/inspector/component/welcome-page";
 import { Field, FieldGroup } from "@/components/ui/field";
 import {
     Select,
@@ -13,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AllowedComponentSchemas } from "@/schemas/converter";
 import { useMemo, useState } from "react";
 
-type ComponentType = "SongTitle" | "Votum" | "Custom";
+type ComponentType = "SongTitle" | "Votum" | "WelcomePage" | "Custom";
 
 type TypeFunctionReturn<V extends boolean> = V extends true ? string : React.ReactNode;
 type TypeFunction = <V extends boolean>(
@@ -27,6 +28,7 @@ type TypeFunction = <V extends boolean>(
 const COMPONENT_TYPE_SELECT_OPTIONS: { key: ComponentType; value: string }[] = [
     { key: "SongTitle", value: "Song Title" },
     { key: "Votum", value: "Votum" },
+    { key: "WelcomePage", value: "Welcome Page" },
     { key: "Custom", value: "Custom" },
 ];
 
@@ -59,6 +61,22 @@ const COMPONENT_TYPE_MAP: Record<string, TypeFunction> = {
         return (<VotumField contentChanged={contentChanged} {...props} />) as TypeFunctionReturn<
             typeof isNew
         >;
+    },
+    WelcomePage: (isNew, props, setActiveType, contentChanged) => {
+        if (isNew === true) {
+            return JSON.stringify({
+                type: "WelcomePage",
+                props: {
+                    baseSource: "",
+                    loopSource: "",
+                },
+            }) as TypeFunctionReturn<typeof isNew>;
+        }
+
+        setActiveType!("WelcomePage");
+        return (
+            <WelcomePageField contentChanged={contentChanged} {...props} />
+        ) as TypeFunctionReturn<typeof isNew>;
     },
 };
 

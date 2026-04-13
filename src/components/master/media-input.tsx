@@ -26,7 +26,7 @@ import { useShortcutsStore } from "@/stores/shortcuts.store";
 import { FieldDescription } from "@/components/ui/field";
 
 export type ApplyScope = "single" | "area" | "all";
-export type AreaName = "content" | "background" | "cover";
+export type AreaName = "content" | "background" | "cover" | "welcomePage";
 
 interface MediaInputProps {
     value: string;

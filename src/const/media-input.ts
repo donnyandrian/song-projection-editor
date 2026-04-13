@@ -10,6 +10,8 @@ const CONTENT_AREANAME = "content" satisfies AreaName;
 
 const COVER_AREANAME = "cover" satisfies AreaName;
 
+const WELCOME_PAGE_AREANAME = "welcomePage" satisfies AreaName;
+
 export {
     IMAGE_ACCEPT,
     VIDEO_ACCEPT,
@@ -17,4 +19,5 @@ export {
     BACKGROUND_AREANAME,
     CONTENT_AREANAME,
     COVER_AREANAME,
+    WELCOME_PAGE_AREANAME,
 };

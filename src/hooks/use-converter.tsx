@@ -3,6 +3,7 @@ import { addConverter } from "@/lib/component-converter";
 import { useEffect } from "react";
 import { SongTitleMemo } from "@/components/core/song_title";
 import { VotumMemo } from "@/components/core/votum";
+import { WelcomePageMemo } from "@/components/core/welcome-page";
 
 export const registerSongTitle = () => {
     addConverter(
@@ -37,9 +38,23 @@ export const registerVotum = () => {
     );
 };
 
+export const registerWelcomePage = () => {
+    addConverter(
+        "WelcomePage",
+        object({
+            baseSource: string(),
+            loopSource: string(),
+        }),
+        (content) => {
+            return <WelcomePageMemo key={content.key} {...content.props} />;
+        },
+    );
+};
+
 export function useConverter() {
     useEffect(() => {
         registerSongTitle();
         registerVotum();
+        registerWelcomePage();
     }, []);
 }
