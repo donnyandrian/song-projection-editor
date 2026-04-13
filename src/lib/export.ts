@@ -69,6 +69,32 @@ function stringifyProjectionData(
     return JSON.stringify(result, null, minified ? undefined : 2);
 }
 
+/**
+ * Extracts all asset paths matching the format:
+ * asset://<<UUID>>-<<NAME>>.<<EXTENSION>>
+ * * @param input - The stringified object or raw string to search
+ * @returns An array of unique asset paths found
+ */
+export const extractAssetPaths = (input: string): string[] => {
+    if (!input) return [];
+
+    /**
+     * Regex breakdown:
+     * asset:\/\/           - Literal prefix
+     * [a-fA-F0-9-]{36}     - Standard UUID
+     * -                    - Separator
+     * [^<>:"/\\|?*]+       - <<NAME>>: OS-safe pattern (allows spaces)
+     * \.                   - The literal dot
+     * [^\s<>:"/\\|?*]+     - <<EXTENSION>>: OS-safe pattern (exclude spaces)
+     */
+    const assetRegex =
+        /asset:\/\/[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}-[^<>:"/\\|?*]+\.[^\s<>:"/\\|?*]+/g;
+
+    const matches = input.match(assetRegex);
+
+    return matches ? [...new Set(matches)] : [];
+};
+
 export async function exportProjections(
     targetProjections: ProjectionMasterWithId[],
     filename = "export.zip",
@@ -95,6 +121,9 @@ export async function exportProjections(
             if (content.bg && content.bg.startsWith("asset://")) usedAssetIds.add(content.bg);
             if (typeof content.content === "string" && content.content.startsWith("asset://")) {
                 usedAssetIds.add(content.content);
+            } else if (typeof content.content !== "string") {
+                const assetPaths = extractAssetPaths(content.content[1]);
+                assetPaths.forEach((path) => usedAssetIds.add(path));
             }
         });
     });
