@@ -19,6 +19,7 @@ export async function importProjectionsZip(zipFile: File) {
 
             if (safeName.endsWith(".mp4")) mime = "video/mp4";
             else if (safeName.endsWith(".webm")) mime = "video/webm";
+            else if (safeName.endsWith(".svg")) mime = "image/svg+xml";
             else if (/\.(jpg|jpeg|png|gif|webp)$/i.exec(safeName))
                 mime = `image/${safeName.split(".").pop()}`;
 
