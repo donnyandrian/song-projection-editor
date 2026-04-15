@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { SongTitleMemo } from "@/components/core/song_title";
 import { VotumMemo } from "@/components/core/votum";
 import { WelcomePageMemo } from "@/components/core/welcome-page";
+import { SyafaatMemo } from "@/components/core/syafaat";
 
 export const registerSongTitle = () => {
     addConverter(
@@ -16,6 +17,18 @@ export const registerSongTitle = () => {
         }),
         (content) => {
             return <SongTitleMemo key={content.key} {...content.props} />;
+        },
+    );
+};
+
+export const registerSyafaat = () => {
+    addConverter(
+        "Syafaat",
+        object({
+            items: array(string()),
+        }),
+        (content) => {
+            return <SyafaatMemo key={content.key} {...content.props} />;
         },
     );
 };
@@ -54,6 +67,7 @@ export const registerWelcomePage = () => {
 export function useConverter() {
     useEffect(() => {
         registerSongTitle();
+        registerSyafaat();
         registerVotum();
         registerWelcomePage();
     }, []);
