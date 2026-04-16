@@ -1,11 +1,20 @@
 import { useEffect, useRef } from "react";
-import { loadAssets, loadProjections, saveProjections, syncAssets } from "@/lib/persistence";
+import {
+    loadAssets,
+    loadProjections,
+    loadSettings,
+    saveProjections,
+    saveSettings,
+    syncAssets,
+} from "@/lib/persistence";
 import { useAssetStore } from "@/stores/asset.store";
 import { useProjectionStore } from "@/stores/projection.store";
 import { useMasterStore } from "@/stores/master.store";
+import { useSettingsStore } from "@/stores/settings.store";
 
 const PROJECTION_SAVE_DEBOUNCE_MS = 500;
 const ASSET_SYNC_DEBOUNCE_MS = 300;
+const SETTINGS_SAVE_DEBOUNCE_MS = 500;
 
 /**
  * usePersistence
@@ -33,6 +42,7 @@ export function usePersistence() {
 
     const projSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const assetSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const settingsSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // ── Initial load ──────────────────────────────────────────────────────────
     useEffect(() => {
@@ -61,6 +71,9 @@ export function usePersistence() {
                     useMasterStore.getState().setActiveTab(firstProjection.id);
                 }
             }
+
+            // 5. Restore settings.
+            loadSettings();
 
             loadedRef.current = true;
         })();
@@ -119,6 +132,31 @@ export function usePersistence() {
             if (assetSyncTimerRef.current !== null) {
                 clearTimeout(assetSyncTimerRef.current);
                 assetSyncTimerRef.current = null;
+            }
+        };
+    }, []);
+
+    // ── Settings persistence ───────────────────────────────────────────────────
+    useEffect(() => {
+        const unsubscribe = useSettingsStore.subscribe((_state) => {
+            if (!loadedRef.current) return;
+
+            // Debounce: user may drop multiple files in quick succession.
+            if (settingsSaveTimerRef.current !== null) {
+                clearTimeout(settingsSaveTimerRef.current);
+            }
+
+            settingsSaveTimerRef.current = setTimeout(() => {
+                settingsSaveTimerRef.current = null;
+                saveSettings(useSettingsStore.getState().global);
+            }, SETTINGS_SAVE_DEBOUNCE_MS);
+        });
+
+        return () => {
+            unsubscribe();
+            if (settingsSaveTimerRef.current !== null) {
+                clearTimeout(settingsSaveTimerRef.current);
+                settingsSaveTimerRef.current = null;
             }
         };
     }, []);

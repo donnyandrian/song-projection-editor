@@ -49,10 +49,12 @@ interface DialogProps {
 interface FormBackgroundMediaInputProps {
     defaultValue?: string;
     required?: boolean;
+    placeholder?: string;
 }
 function FormBackgroundMediaInput({
     defaultValue = "",
     required = false,
+    placeholder,
 }: FormBackgroundMediaInputProps) {
     const [value, setValue] = useState(defaultValue);
 
@@ -64,7 +66,7 @@ function FormBackgroundMediaInput({
                 onUploadApply={(id) => setValue(id)}
                 areaName={mi.BACKGROUND_AREANAME}
                 accept={mi.BACKGROUND_ACCEPT}
-                placeholder="background_1080.webm"
+                placeholder={placeholder || "background_1080.webm"}
             />
             <input
                 type="text"
@@ -640,7 +642,11 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
                     {fields}
                     <Field>
                         <FieldLabel className="gap-0.5">Background</FieldLabel>
-                        <FormBackgroundMediaInput defaultValue={currentProjection?.bg || ""} />
+                        <FormBackgroundMediaInput
+                            placeholder={
+                                currentProjection?.bg && `Inheriting: ${currentProjection.bg}`
+                            }
+                        />
                     </Field>
                     <Field>
                         <FieldLabel className="gap-0.5">Transition</FieldLabel>
