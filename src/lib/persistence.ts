@@ -3,11 +3,14 @@ import { jsonObjectToProjection } from "@/lib/json-to-projection";
 import { ProjectionMasterSchema } from "@/schemas/projection";
 import { useAssetStore } from "@/stores/asset.store";
 import { useProjectionStore } from "@/stores/projection.store";
+import { useSettingsStore } from "@/stores/settings.store";
 import type { ProjectionMasterWithId } from "@/types";
+import type { AppSettings } from "@/types/settings";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 export const PROJECTIONS_STORAGE_KEY = "xellanix-projection-editor:projections";
+export const SETTINGS_STORAGE_KEY = "xellanix-projection-editor:settings";
 
 // ─── Projections ──────────────────────────────────────────────────────────────
 
@@ -147,4 +150,39 @@ export async function syncAssets(previousIds: Set<string>): Promise<Set<string>>
     }
 
     return currentIds;
+}
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+
+/**
+ * Save settings to localStorage.
+ *
+ * @param settings  The settings to save.
+ */
+export function saveSettings(settings: AppSettings): void {
+    try {
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    } catch (err) {
+        console.error("[persistence] Failed to save settings:", err);
+    }
+}
+
+/**
+ * Read settings from localStorage and inject them into the settings store.
+ */
+export function loadSettings() {
+    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (!raw) return false;
+
+    try {
+        const parsed = JSON.parse(raw) as AppSettings;
+
+        useSettingsStore.getState().set((state) => {
+            state.global = parsed;
+            state.globalActivator = "server";
+            Object.assign(state.temp, state.global);
+        });
+    } catch (err) {
+        console.error("[persistence] Failed to load settings:", err);
+    }
 }
