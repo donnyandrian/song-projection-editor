@@ -12,7 +12,15 @@ type SongTitleProps = {
 function SongTitle({ title, author, className, titleClassName }: SongTitleProps) {
     return (
         <ComplexContainer className="gap-12">
-            <span className={cn("song-title text-white", className, titleClassName)}>{title}</span>
+            <span
+                className={cn(
+                    "song-title whitespace-pre-line text-white",
+                    className,
+                    titleClassName,
+                )}
+            >
+                {title}
+            </span>
             {author && (
                 <span
                     className={cn(

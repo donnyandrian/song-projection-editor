@@ -1,5 +1,6 @@
 import { TransformedInput } from "@/components/core/transformed-input";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
 import { useCallback } from "react";
 
 interface SongTitleProps {
@@ -32,21 +33,21 @@ export function SongTitleField({
         <FieldGroup>
             <Field>
                 <FieldLabel>Title</FieldLabel>
-                <TransformedInput
+                <Textarea
                     value={title ?? ""}
                     onChange={(e) => handleUpdate("title", e.target.value)}
-                    transformer={(val) => val.trim()}
                     placeholder="Title"
+                    className="min-h-8"
                     required
                 />
             </Field>
             <Field>
                 <FieldLabel>Author</FieldLabel>
-                <TransformedInput
+                <Textarea
                     value={author ?? ""}
                     onChange={(e) => handleUpdate("author", e.target.value)}
-                    transformer={(val) => val.trim()}
                     placeholder="Author"
+                    className="min-h-8"
                 />
             </Field>
             <Field>

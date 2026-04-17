@@ -139,28 +139,28 @@ export function AddSongQueue({ setOpenDialog }: DialogProps) {
                         <FieldLabel className="gap-0.5" htmlFor="queue-title">
                             Title <span className="text-destructive">*</span>
                         </FieldLabel>
-                        <Input
+                        <Textarea
                             id="queue-title"
                             name="title"
-                            type="text"
                             required
                             placeholder="Goodness of God (Live)"
                             onChange={(e) => (e.target.value = e.target.value.trimStart())}
                             onBlur={(e) => (e.target.value = e.target.value.trim())}
+                            className="min-h-8"
                         />
                     </Field>
                     <Field>
                         <FieldLabel className="gap-0.5" htmlFor="queue-author">
                             Author
                         </FieldLabel>
-                        <Input
+                        <Textarea
                             id="queue-author"
                             name="author"
-                            type="text"
                             required
                             placeholder="Bethel Music & Jenn Johnson"
                             onChange={(e) => (e.target.value = e.target.value.trimStart())}
                             onBlur={(e) => (e.target.value = e.target.value.trim())}
+                            className="min-h-8"
                         />
                     </Field>
                     <Field>
