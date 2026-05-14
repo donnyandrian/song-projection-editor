@@ -654,7 +654,7 @@ function InspectorQueueTab({
                                                 updateLoopQueueValue(index, type, val)
                                             }
                                         >
-                                            <SelectTrigger className="flex-1">
+                                            <SelectTrigger className="w-px flex-1">
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
