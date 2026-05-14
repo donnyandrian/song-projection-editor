@@ -345,7 +345,11 @@ export function AddLyricsPartContent({ setOpenDialog }: DialogProps) {
                     />
                     <Field>
                         <FieldLabel className="gap-0.5">Background</FieldLabel>
-                        <FormBackgroundMediaInput defaultValue={currentProjection?.bg || ""} />
+                        <FormBackgroundMediaInput
+                            placeholder={
+                                currentProjection?.bg && `Inheriting: ${currentProjection.bg}`
+                            }
+                        />
                     </Field>
                     <Field>
                         <FieldLabel className="gap-0.5">Transition</FieldLabel>
