@@ -5,6 +5,7 @@ import { useCallback } from "react";
 
 interface SongTitleProps {
     title: string;
+    medleyTitle?: string;
     author?: string;
     className?: string;
     titleClassName?: string;
@@ -12,6 +13,7 @@ interface SongTitleProps {
 }
 export function SongTitleField({
     title,
+    medleyTitle,
     author,
     className,
     titleClassName,
@@ -22,11 +24,11 @@ export function SongTitleField({
             contentChanged(
                 JSON.stringify({
                     type: "SongTitle",
-                    props: { title, author, className, titleClassName, [key]: val },
+                    props: { title, medleyTitle, author, className, titleClassName, [key]: val },
                 }),
             );
         },
-        [author, className, contentChanged, title, titleClassName],
+        [author, className, contentChanged, medleyTitle, title, titleClassName],
     );
 
     return (
@@ -36,6 +38,16 @@ export function SongTitleField({
                 <Textarea
                     value={title ?? ""}
                     onChange={(e) => handleUpdate("title", e.target.value)}
+                    placeholder="Title"
+                    className="min-h-8"
+                    required
+                />
+            </Field>
+            <Field>
+                <FieldLabel>Medley Title</FieldLabel>
+                <Textarea
+                    value={medleyTitle ?? ""}
+                    onChange={(e) => handleUpdate("medleyTitle", e.target.value)}
                     placeholder="Title"
                     className="min-h-8"
                     required

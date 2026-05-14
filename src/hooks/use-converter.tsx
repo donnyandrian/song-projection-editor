@@ -11,6 +11,7 @@ export const registerSongTitle = () => {
         "SongTitle",
         object({
             title: string(),
+            medleyTitle: string().optional(),
             author: string().optional(),
             className: string().optional(),
             titleClassName: string().optional(),

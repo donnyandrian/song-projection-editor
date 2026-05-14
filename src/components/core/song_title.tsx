@@ -4,12 +4,13 @@ import { memo } from "react";
 
 type SongTitleProps = {
     title: string;
+    medleyTitle?: string;
     author?: string;
     className?: string;
     titleClassName?: string;
 };
 
-function SongTitle({ title, author, className, titleClassName }: SongTitleProps) {
+function SongTitle({ title, medleyTitle, author, className, titleClassName }: SongTitleProps) {
     return (
         <ComplexContainer className="gap-12">
             <span
@@ -19,7 +20,8 @@ function SongTitle({ title, author, className, titleClassName }: SongTitleProps)
                     titleClassName,
                 )}
             >
-                {title}
+                {title} {medleyTitle && <span className="text-5xl/tight">medley</span>}{" "}
+                {medleyTitle}
             </span>
             {author && (
                 <span
