@@ -47,8 +47,23 @@ export async function importProjectionsZip(zipFile: File) {
     importedProjections.forEach((p) => store.addProjection(p));
 }
 
+const FILENAME_RECORDS: Record<string, string[]> = {};
 export function getFileNameFromId(id: string) {
     // Strip UUID from id
     // e.g. "asset://123e4567-e89b-12d3-a456-426614174000-filename.png" -> "filename.png"
-    return id.replace(/^asset:\/\/[0-9a-fA-F-]{36}-/, "");
+    const original = id.replace(/^asset:\/\/[0-9a-fA-F-]{36}-/, "");
+    if (!(original in FILENAME_RECORDS)) {
+        FILENAME_RECORDS[original] = [];
+    }
+
+    let index = FILENAME_RECORDS[original].findIndex((_id) => _id === id);
+    if (index < 0) {
+        const length = FILENAME_RECORDS[original].push(id);
+        index = length - 1;
+    }
+
+    if (index > 0) {
+        return `(${index}) ${original}`;
+    }
+    return original;
 }
