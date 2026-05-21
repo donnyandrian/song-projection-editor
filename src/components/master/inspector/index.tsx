@@ -666,7 +666,11 @@ function InspectorQueueTab({
                                                       ))
                                                     : activeProjection.contents.map((item, i) => (
                                                           <SelectItem key={i} value={String(i + 1)}>
-                                                              {item.name || `Item ${i + 1}`}
+                                                              {item.name ||
+                                                                  (typeof item.content ===
+                                                                      "string" &&
+                                                                      item.content) ||
+                                                                  `Item ${i + 1}`}
                                                           </SelectItem>
                                                       ))}
                                             </SelectContent>
