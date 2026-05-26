@@ -260,8 +260,6 @@ export function AddLyricsPartContent({ setOpenDialog }: DialogProps) {
                             textTransform: "uppercase",
                             fontSize: "8rem",
                             lineHeight: 1.125,
-                            textShadow:
-                                "0px 1px 2px color-mix(in oklab, hsl(212,51%,51%) 100%, transparent), 0px 3px 2px color-mix(in oklab, hsl(212,51%,51%) 100%, transparent), 0px 4px 8px color-mix(in oklab, hsl(212,51%,51%) 100%, transparent)",
                             ...style,
                         },
                     } as Extract<ContentT, { type: "Text" }>["options"],
@@ -531,8 +529,6 @@ export function AddMasterContent({ setOpenDialog }: DialogProps) {
                                     textTransform: "uppercase",
                                     fontSize: "8rem",
                                     lineHeight: 1.125,
-                                    textShadow:
-                                        "0px 1px 2px color-mix(in oklab, hsl(212,51%,51%) 100%, transparent), 0px 3px 2px color-mix(in oklab, hsl(212,51%,51%) 100%, transparent), 0px 4px 8px color-mix(in oklab, hsl(212,51%,51%) 100%, transparent)",
                                     ...style,
                                 },
                             } as Extract<ContentT, { type: "Text" }>["options"],
