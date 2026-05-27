@@ -8,17 +8,15 @@ import { useCallback } from "react";
 
 interface SyafaatProps {
     items: string[];
-    contentChanged: (val: string) => void;
+    contentChanged: (val: unknown) => void;
 }
 export function SyafaatField({ items, contentChanged }: SyafaatProps) {
     const handleUpdate = useCallback(
         (key: string, val: unknown) => {
-            contentChanged(
-                JSON.stringify({
-                    type: "Syafaat",
-                    props: { items, [key]: val },
-                }),
-            );
+            contentChanged({
+                type: "Syafaat",
+                props: { items, [key]: val },
+            });
         },
         [contentChanged, items],
     );

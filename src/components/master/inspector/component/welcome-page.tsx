@@ -6,17 +6,15 @@ import { MediaInput } from "@/components/master/media-input";
 interface WelcomePageProps {
     baseSource: string;
     loopSource: string;
-    contentChanged: (val: string) => void;
+    contentChanged: (val: unknown) => void;
 }
 export function WelcomePageField({ baseSource, loopSource, contentChanged }: WelcomePageProps) {
     const handleUpdate = useCallback(
         (key: string, val: string) => {
-            contentChanged(
-                JSON.stringify({
-                    type: "WelcomePage",
-                    props: { baseSource, loopSource, [key]: val },
-                }),
-            );
+            contentChanged({
+                type: "WelcomePage",
+                props: { baseSource, loopSource, [key]: val },
+            });
         },
         [baseSource, contentChanged, loopSource],
     );

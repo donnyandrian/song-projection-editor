@@ -9,17 +9,15 @@ import { useCallback } from "react";
 interface VotumProps {
     title: string;
     content: { key: string; value: string }[];
-    contentChanged: (val: string) => void;
+    contentChanged: (val: unknown) => void;
 }
 export function VotumField({ title, content, contentChanged }: VotumProps) {
     const handleUpdate = useCallback(
         (key: string, val: unknown) => {
-            contentChanged(
-                JSON.stringify({
-                    type: "Votum",
-                    props: { title, content, [key]: val },
-                }),
-            );
+            contentChanged({
+                type: "Votum",
+                props: { title, content, [key]: val },
+            });
         },
         [content, contentChanged, title],
     );

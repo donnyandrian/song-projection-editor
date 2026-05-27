@@ -23,7 +23,7 @@ type TypeFunction = <V extends boolean>(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     props: any,
     setActiveType: V extends true ? undefined : (t: ComponentType) => void,
-    contentChanged: (val: string) => void,
+    contentChanged: (val: unknown) => void,
 ) => TypeFunctionReturn<V>;
 
 const COMPONENT_TYPE_SELECT_OPTIONS: { key: ComponentType; value: string }[] = [
@@ -97,7 +97,7 @@ const COMPONENT_TYPE_MAP: Record<string, TypeFunction> = {
 
 interface SwitcherProps {
     content: string;
-    contentChanged: (val: string) => void;
+    contentChanged: (val: unknown) => void;
 }
 export function Switcher({ content, contentChanged }: SwitcherProps) {
     const [activeType, setActiveType] = useState<ComponentType>("SongTitle");

@@ -6,33 +6,30 @@ type SongTitleProps = {
     title: string;
     medleyTitle?: string;
     author?: string;
-    className?: string;
-    titleClassName?: string;
+    style?: React.CSSProperties;
+    titleStyle?: React.CSSProperties;
 };
 
-function SongTitle({ title, medleyTitle, author, className, titleClassName }: SongTitleProps) {
+function SongTitle(props: SongTitleProps) {
     return (
         <ComplexContainer className="gap-12">
             <span
-                className={cn(
-                    "song-title whitespace-pre-line text-white",
-                    className,
-                    titleClassName,
-                )}
+                className={"song-title whitespace-pre-line text-white"}
+                style={{ ...props.style, ...props.titleStyle }}
             >
-                {title} {medleyTitle && <span className="text-5xl/tight">medley</span>}{" "}
-                {medleyTitle}
+                {props.title} {props.medleyTitle && <span className="text-5xl/tight">medley</span>}{" "}
+                {props.medleyTitle}
             </span>
-            {author && (
+            {props.author && (
                 <span
                     className={cn(
                         "geologica-base geologica text-4.5xl/tight relative font-medium whitespace-pre-line text-white",
                         "before:absolute before:top-1/2 before:bottom-1/2 before:-left-64 before:h-1 before:w-48 before:bg-white",
                         "after:absolute after:top-1/2 after:-right-64 after:bottom-1/2 after:h-1 after:w-48 after:bg-white",
-                        className,
                     )}
+                    style={props.style}
                 >
-                    {author}
+                    {props.author}
                 </span>
             )}
         </ComplexContainer>

@@ -1,4 +1,4 @@
-import { array, object, string } from "zod";
+import { array, number, object, record, string, union, type ZodType } from "zod";
 import { addConverter } from "@/lib/component-converter";
 import { useEffect } from "react";
 import { SongTitleMemo } from "@/components/core/song_title";
@@ -13,8 +13,12 @@ export const registerSongTitle = () => {
             title: string(),
             medleyTitle: string().optional(),
             author: string().optional(),
-            className: string().optional(),
-            titleClassName: string().optional(),
+            style: (
+                record(string(), union([string(), number()])) as ZodType<React.CSSProperties>
+            ).optional(),
+            titleStyle: (
+                record(string(), union([string(), number()])) as ZodType<React.CSSProperties>
+            ).optional(),
         }),
         (content) => {
             return <SongTitleMemo key={content.key} {...content.props} />;

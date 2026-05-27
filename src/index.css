@@ -266,31 +266,31 @@
 }
 
 @utility geologica-base {
-    @apply text-center!;
-    @apply mx-64!;
+    @apply text-center;
+    @apply mx-64;
 }
 
 @utility geologica {
-    @apply font-geologica! [font-variation-settings:'slnt'_0,'CRSV'_1,'SHRP'_0]!;
+    @apply font-geologica [font-variation-settings:'slnt'_0,'CRSV'_1,'SHRP'_0];
 }
 
 @utility geologica-italic {
     @apply geologica-base;
-    @apply font-geologica! [font-variation-settings:'slnt'_-10,'CRSV'_1,'SHRP'_0]!;
-    @apply font-black! uppercase!;
+    @apply font-geologica [font-variation-settings:'slnt'_-10,'CRSV'_1,'SHRP'_0];
+    @apply font-black uppercase;
 }
 
 @utility song-title {
     @apply geologica-italic;
-    @apply text-[10rem]! leading-[1.125];
+    @apply text-[10rem] leading-[1.125];
 }
 @utility song-lyric {
     @apply geologica-italic;
-    @apply text-9xl! leading-[1.125];
+    @apply text-9xl leading-[1.125];
 }
 @utility section-title {
     @apply geologica geologica-base;
-    @apply text-9xl! leading-[1.125] font-bold;
+    @apply text-9xl leading-[1.125] font-bold;
 }
 
 @utility outline-shadow {

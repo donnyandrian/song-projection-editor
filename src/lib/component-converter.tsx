@@ -23,8 +23,6 @@ const spanConverter = ({ key, props: { children, ...props } = {} }: CT.SpanCompo
         }
     }
 
-    console.log("key: ", key);
-
     return (
         <span key={key} {...props}>
             {processedChildren}

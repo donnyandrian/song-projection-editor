@@ -156,7 +156,6 @@ export function AddSongQueue({ setOpenDialog }: DialogProps) {
                         <Textarea
                             id="queue-author"
                             name="author"
-                            required
                             placeholder="Bethel Music & Jenn Johnson"
                             onChange={(e) => (e.target.value = e.target.value.trimStart())}
                             onBlur={(e) => (e.target.value = e.target.value.trim())}
