@@ -270,28 +270,37 @@ function InspectorContentTab({
         handleUpdate((old) => ({ ...old, group: e.target.value || undefined }));
     };
 
-    const contentChanged = (val: string) => {
+    const contentChanged = (val: unknown) => {
         handleUpdate((old) => {
             // Component edits as string, fallback for Primitives and Text
             if (old.type === "Component") {
                 try {
-                    const p = { type: "Component", content: JSON.parse(val) };
+                    const p = {
+                        type: "Component",
+                        content: typeof val === "string" ? JSON.parse(val) : val,
+                    };
                     const res = ProjectionItemSchema.safeParse(p);
                     if (!res.success) throw res.error;
 
                     return {
                         ...old,
-                        content: [res.data.content[0], val] as [React.ReactNode, string],
+                        content: [
+                            res.data.content[0],
+                            typeof val === "string" ? val : JSON.stringify(val),
+                        ] as [React.ReactNode, string],
                     };
                 } catch (e) {
                     console.error("Invalid JSON or Schema mismatch. Error: ", e);
                     return {
                         ...old,
-                        content: [old.content[0], val] as [React.ReactNode, string],
+                        content: [
+                            old.content[0],
+                            typeof val === "string" ? val : JSON.stringify(val),
+                        ] as [React.ReactNode, string],
                     };
                 }
             }
-            return { ...old, content: val };
+            return { ...old, content: val as string };
         });
     };
 

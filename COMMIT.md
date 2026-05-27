@@ -9,7 +9,7 @@
    <BLANK LINE>
    `body`
    
-   - **Types**: `feat`, `fix`, `refactor`, `style`, `docs`, `test`, `chore`, `ci`, `build`, `revert`.
+   - **Types**: `feat`, `fix`, `refactor`, `style`, `docs`, `test`, `chore`, `ci`, `build`, `revert`, `perf`.
    - **Subject**: Use the imperative mood ("add" not "added"), max 50 characters, no period at the end.
 
 3. **Body Formulation**:
