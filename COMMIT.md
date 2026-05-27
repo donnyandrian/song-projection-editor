@@ -9,8 +9,9 @@
    `type(scope): subject`
    <BLANK LINE>
    `body`
-    - **Types**: `feat`, `fix`, `refactor`, `style`, `docs`, `test`, `chore`, `ci`, `build`, `revert`.
-    - **Subject**: Use the imperative mood ("add" not "added"), max 50 characters, no period at the end.
+   
+   - **Types**: `feat`, `fix`, `refactor`, `style`, `docs`, `test`, `chore`, `ci`, `build`, `revert`, `perf`.
+   - **Subject**: Use the imperative mood ("add" not "added"), max 50 characters, no period at the end.
 
 3. **Body Formulation**:
     - Always include a body separated from the subject by a single blank line.

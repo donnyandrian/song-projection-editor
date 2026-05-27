@@ -29,11 +29,12 @@ export interface StyleItem {
 }
 
 interface CssStylesInputProps {
+    label?: string;
     styles: StyleItem[];
     onChange: (styles: StyleItem[]) => void;
 }
 
-export function CssStylesInput({ styles, onChange }: CssStylesInputProps) {
+export function CssStylesInput({ label = "CSS Styles", styles, onChange }: CssStylesInputProps) {
     const addStyle = () => {
         onChange([...styles, { id: generateId(), property: "", value: "" }]);
     };
@@ -83,7 +84,7 @@ export function CssStylesInput({ styles, onChange }: CssStylesInputProps) {
 
     return (
         <Field>
-            <FieldLabel>CSS Styles</FieldLabel>
+            <FieldLabel>{label}</FieldLabel>
             <div className="flex flex-col gap-2">
                 {styles.map((style) => {
                     const comboboxValue = CSS_PROPERTIES.includes(style.property)
@@ -163,7 +164,7 @@ export function CssStylesInput({ styles, onChange }: CssStylesInputProps) {
                 </ButtonGroup>
             </div>
             <FieldDescription>
-                Define custom React CSS properties for this text element. Use camelCase formatting.
+                Define custom React CSS properties. Use camelCase formatting.
             </FieldDescription>
         </Field>
     );
