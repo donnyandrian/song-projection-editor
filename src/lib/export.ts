@@ -3,6 +3,7 @@ import { useAssetStore } from "@/stores/asset.store";
 import type { ProjectionMasterWithId } from "@/types";
 import { useSettingsStore } from "@/stores/settings.store";
 import { ProjectionMasterSchema } from "@/schemas/projection";
+import { toast } from "sonner";
 
 export interface ExportProjectionOptions {
     separateFiles?: boolean;
@@ -130,88 +131,95 @@ export async function exportProjections(
     filename = "export.zip",
     options: ExportProjectionOptions = {},
 ) {
-    // Snapshot the input immediately, before any async work.
-    const snapshotProjections = targetProjections.map((p) => ({
-        ...p,
-        contents: p.contents.map((content) => ({ ...content })),
-    }));
+    toast.dismiss();
+    const toastId = toast.loading("Exporting projections...");
 
-    const {
-        separateFiles = false,
-        minifiedMetadata = false,
-        productionMode = false,
-        includeSettings = false,
-    } = options;
+    try {
+        const {
+            separateFiles = false,
+            minifiedMetadata = false,
+            productionMode = false,
+            includeSettings = false,
+        } = options;
 
-    const assets = useAssetStore.getState().assets;
-    const zipData: Record<string, Uint8Array> = {};
-    const usedAssetPaths = new Set<string>();
-    const exportData: ExportProjectionData[] = [];
+        const assets = useAssetStore.getState().assets;
+        const zipData: Record<string, Uint8Array> = {};
+        const usedAssetPaths = new Set<string>();
+        const exportData: ExportProjectionData[] = [];
 
-    for (const projection of snapshotProjections) {
-        const stripped = stripInheritedProperties(projection, productionMode);
-        exportData.push(stripped);
+        for (const p of targetProjections) {
+            const projection = { ...p, contents: p.contents.map((c) => ({ ...c })) };
+            const stripped = stripInheritedProperties(projection, productionMode);
+            exportData.push(stripped);
 
-        // Identify used assets
-        if (stripped.bg?.startsWith("asset://")) usedAssetPaths.add(stripped.bg);
+            // Identify used assets
+            if (stripped.bg?.startsWith("asset://")) usedAssetPaths.add(stripped.bg);
 
-        for (const content of stripped.contents) {
-            if (content.bg?.startsWith("asset://")) usedAssetPaths.add(content.bg);
+            for (const content of stripped.contents) {
+                if (content.bg?.startsWith("asset://")) usedAssetPaths.add(content.bg);
 
-            if (typeof content.content === "string") {
-                if (content.content.startsWith("asset://")) usedAssetPaths.add(content.content);
-            } else {
-                for (const path of extractAssetPaths(content.content[1])) {
-                    usedAssetPaths.add(path);
+                if (typeof content.content === "string") {
+                    if (content.content.startsWith("asset://")) usedAssetPaths.add(content.content);
+                } else {
+                    for (const path of extractAssetPaths(content.content[1])) {
+                        usedAssetPaths.add(path);
+                    }
                 }
             }
         }
-    }
 
-    // Add assets to ZIP
-    await Promise.all(
-        Array.from(usedAssetPaths, async (assetPath) => {
-            const asset = assets[assetPath];
-            if (asset) {
-                const arrayBuffer = await asset.file.arrayBuffer();
-                // Strip the "asset://" prefix to create a valid zip path/filename
-                const safeName = assetPath.replace("asset://", "");
-                zipData[`assets/${safeName}`] = new Uint8Array(arrayBuffer);
+        // Add assets to ZIP
+        await Promise.all(
+            Array.from(usedAssetPaths, async (assetPath) => {
+                const asset = assets[assetPath];
+                if (asset) {
+                    const arrayBuffer = await asset.file.arrayBuffer();
+                    // Strip the "asset://" prefix to create a valid zip path/filename
+                    const safeName = assetPath.replace("asset://", "");
+                    zipData[`assets/${safeName}`] = new Uint8Array(arrayBuffer);
+                }
+            }),
+        );
+
+        // Add JSON projection data
+        if (separateFiles) {
+            for (let i = 0; i < exportData.length; i++) {
+                const p = exportData[i];
+                const safeTitle = p.title.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+                zipData[`projection-${i + 1}-${safeTitle}.json`] = strToU8(
+                    stringifyProjectionData(p, minifiedMetadata),
+                );
             }
-        }),
-    );
-
-    // Add JSON projection data
-    if (separateFiles) {
-        for (let i = 0; i < exportData.length; i++) {
-            const p = exportData[i];
-            const safeTitle = p.title.replace(/[^a-z0-9]/gi, "_").toLowerCase();
-            zipData[`projection-${i + 1}-${safeTitle}.json`] = strToU8(
-                stringifyProjectionData(p, minifiedMetadata),
+        } else {
+            zipData["projections.json"] = strToU8(
+                stringifyProjectionData(exportData, minifiedMetadata),
             );
         }
-    } else {
-        zipData["projections.json"] = strToU8(
-            stringifyProjectionData(exportData, minifiedMetadata),
-        );
+
+        if (includeSettings) {
+            const settings = useSettingsStore.getState().global;
+            zipData["settings.json"] = strToU8(
+                JSON.stringify(settings, null, minifiedMetadata ? undefined : 2),
+            );
+        }
+
+        // Generate and download
+        const zipped = zipSync(zipData);
+        const blob = new Blob([zipped as unknown as BlobPart], { type: "application/zip" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+
+        toast.dismiss(toastId);
+        toast.success("Projections exported successfully!");
+
+        a.click();
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error("Failed to export projections", err);
+        toast.dismiss(toastId);
+        toast.error("Failed to export projections! Error: " + JSON.stringify(err));
     }
-
-    if (includeSettings) {
-        const settings = useSettingsStore.getState().global;
-        zipData["settings.json"] = strToU8(
-            JSON.stringify(settings, null, minifiedMetadata ? undefined : 2),
-        );
-    }
-
-    // Generate and download
-    const zipped = zipSync(zipData);
-    const blob = new Blob([zipped as unknown as BlobPart], { type: "application/zip" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-
-    URL.revokeObjectURL(url);
 }
