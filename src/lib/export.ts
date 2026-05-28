@@ -131,22 +131,9 @@ export async function exportProjections(
     options: ExportProjectionOptions = {},
 ) {
     // Snapshot the input immediately, before any async work.
-    // Deep clone the projections so mutations to the originals
-    // (e.g. user edits while the export is running)
-    // don't affect the export.
     const snapshotProjections = targetProjections.map((p) => ({
         ...p,
-        contents: p.contents.map((content) => {
-            if (content.type !== "Component") return structuredClone(content);
-
-            // React.ReactNode (content[0]) is not structuredClone-able.
-            // The string (content[1]) is already a serialized snapshot — just copy it.
-            return {
-                ...content,
-                content: [content.content[0], content.content[1]] as typeof content.content,
-            };
-        }),
-        loopQueue: structuredClone(p.loopQueue),
+        contents: p.contents.map((content) => ({ ...content })),
     }));
 
     const {
