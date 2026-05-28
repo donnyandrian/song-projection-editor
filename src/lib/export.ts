@@ -13,60 +13,91 @@ export interface ExportProjectionOptions {
 
 type ExportProjectionData = ProjectionMasterWithId;
 
+function pickMajorFromInheritedProperties(projection: ProjectionMasterWithId) {
+    const freqBg = new Map<typeof projection.bg, number>();
+    const freqTransition = new Map<typeof projection.transition, number>();
+
+    let maxCountBg = 0;
+    let maxCountTransition = 0;
+
+    let mostCommonBg = projection.contents[0].bg ?? projection.bg;
+    let mostCommonTransition = projection.contents[0].transition ?? projection.transition;
+
+    for (const content of projection.contents) {
+        const bg = content.bg ?? projection.bg;
+        const transition = content.transition ?? projection.transition;
+
+        const countBg = (freqBg.get(bg) || 0) + 1;
+        freqBg.set(bg, countBg);
+
+        const countTransition = (freqTransition.get(transition) || 0) + 1;
+        freqTransition.set(transition, countTransition);
+
+        if (countBg > maxCountBg) {
+            maxCountBg = countBg;
+            mostCommonBg = bg;
+        }
+
+        if (countTransition > maxCountTransition) {
+            maxCountTransition = countTransition;
+            mostCommonTransition = transition;
+        }
+    }
+
+    const finalBg = mostCommonBg !== projection.bg ? mostCommonBg : projection.bg;
+    const finalTransition =
+        mostCommonTransition !== projection.transition
+            ? mostCommonTransition
+            : projection.transition;
+
+    return { finalBg, finalTransition };
+}
+
 function stripInheritedProperties(
     projection: ProjectionMasterWithId,
     productionMode: boolean,
 ): ExportProjectionData {
-    if (!productionMode) {
-        return {
-            ...projection,
-            contents: projection.contents.map((content) => ({ ...content })),
-        };
+    if (!productionMode) return projection;
+
+    // If all the contents' background or transition are different from the projection's
+    // rewrite the projection's background and transition to the most common value
+    const { finalBg, finalTransition } = pickMajorFromInheritedProperties(projection);
+
+    projection.bg = finalBg;
+    projection.transition = finalTransition;
+    for (const content of projection.contents) {
+        if (content.bg === finalBg) delete content.bg;
+        if (content.transition === finalTransition) delete content.transition;
     }
 
-    return {
-        ...projection,
-        contents: projection.contents.map((content) => {
-            const nextContent = { ...content };
-
-            if (nextContent.bg === projection.bg) {
-                delete nextContent.bg;
-            }
-
-            if (nextContent.transition === projection.transition) {
-                delete nextContent.transition;
-            }
-
-            return nextContent;
-        }),
-    };
+    return projection;
 }
 
 function stringifyProjectionData(
     data: ExportProjectionData | ExportProjectionData[],
     minified: boolean,
 ) {
-    let result: unknown;
+    const indent = minified ? undefined : 2;
+
     if (Array.isArray(data)) {
-        result = [];
+        const result: unknown[] = [];
         for (const d of data) {
             const res = ProjectionMasterSchema.safeEncode(d);
             if (!res.success) {
                 console.error("Invalid object or Schema mismatch. Error: ", res.error);
                 continue;
             }
-            (result as unknown[]).push(res.data);
+            result.push(res.data);
         }
-    } else {
-        result = {};
-        const res = ProjectionMasterSchema.safeEncode(data);
-        if (!res.success) {
-            console.error("Invalid object or Schema mismatch. Error: ", res.error);
-            return "";
-        }
-        result = res.data;
+        return JSON.stringify(result, null, indent);
     }
-    return JSON.stringify(result, null, minified ? undefined : 2);
+
+    const res = ProjectionMasterSchema.safeEncode(data);
+    if (!res.success) {
+        console.error("Invalid object or Schema mismatch. Error: ", res.error);
+        return "";
+    }
+    return JSON.stringify(res.data, null, indent);
 }
 
 /**
@@ -91,7 +122,6 @@ export const extractAssetPaths = (input: string): string[] => {
         /asset:\/\/[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}-[^<>:"/\\|?*]+\.[^\s<>:"/\\|?*]+/g;
 
     const matches = input.match(assetRegex);
-
     return matches ? [...new Set(matches)] : [];
 };
 
@@ -100,6 +130,25 @@ export async function exportProjections(
     filename = "export.zip",
     options: ExportProjectionOptions = {},
 ) {
+    // Snapshot the input immediately, before any async work.
+    // Deep clone the projections so mutations to the originals
+    // (e.g. user edits while the export is running)
+    // don't affect the export.
+    const snapshotProjections = targetProjections.map((p) => ({
+        ...p,
+        contents: p.contents.map((content) => {
+            if (content.type !== "Component") return structuredClone(content);
+
+            // React.ReactNode (content[0]) is not structuredClone-able.
+            // The string (content[1]) is already a serialized snapshot — just copy it.
+            return {
+                ...content,
+                content: [content.content[0], content.content[1]] as typeof content.content,
+            };
+        }),
+        loopQueue: structuredClone(p.loopQueue),
+    }));
+
     const {
         separateFiles = false,
         minifiedMetadata = false,
@@ -109,44 +158,51 @@ export async function exportProjections(
 
     const assets = useAssetStore.getState().assets;
     const zipData: Record<string, Uint8Array> = {};
-    const usedAssetIds = new Set<string>();
-    const exportData = targetProjections.map((projection) =>
-        stripInheritedProperties(projection, productionMode),
-    );
+    const usedAssetPaths = new Set<string>();
+    const exportData: ExportProjectionData[] = [];
 
-    // Identify used assets
-    exportData.forEach((proj) => {
-        if (proj.bg && proj.bg.startsWith("asset://")) usedAssetIds.add(proj.bg);
-        proj.contents.forEach((content) => {
-            if (content.bg && content.bg.startsWith("asset://")) usedAssetIds.add(content.bg);
-            if (typeof content.content === "string" && content.content.startsWith("asset://")) {
-                usedAssetIds.add(content.content);
-            } else if (typeof content.content !== "string") {
-                const assetPaths = extractAssetPaths(content.content[1]);
-                assetPaths.forEach((path) => usedAssetIds.add(path));
+    for (const projection of snapshotProjections) {
+        const stripped = stripInheritedProperties(projection, productionMode);
+        exportData.push(stripped);
+
+        // Identify used assets
+        if (stripped.bg?.startsWith("asset://")) usedAssetPaths.add(stripped.bg);
+
+        for (const content of stripped.contents) {
+            if (content.bg?.startsWith("asset://")) usedAssetPaths.add(content.bg);
+
+            if (typeof content.content === "string") {
+                if (content.content.startsWith("asset://")) usedAssetPaths.add(content.content);
+            } else {
+                for (const path of extractAssetPaths(content.content[1])) {
+                    usedAssetPaths.add(path);
+                }
             }
-        });
-    });
-
-    // Add assets to ZIP
-    for (const assetId of usedAssetIds) {
-        const asset = assets[assetId];
-        if (asset) {
-            const arrayBuffer = await asset.file.arrayBuffer();
-            // Strip the "asset://" prefix to create a valid zip path/filename
-            const safeName = assetId.replace("asset://", "");
-            zipData[`assets/${safeName}`] = new Uint8Array(arrayBuffer);
         }
     }
 
+    // Add assets to ZIP
+    await Promise.all(
+        Array.from(usedAssetPaths, async (assetPath) => {
+            const asset = assets[assetPath];
+            if (asset) {
+                const arrayBuffer = await asset.file.arrayBuffer();
+                // Strip the "asset://" prefix to create a valid zip path/filename
+                const safeName = assetPath.replace("asset://", "");
+                zipData[`assets/${safeName}`] = new Uint8Array(arrayBuffer);
+            }
+        }),
+    );
+
     // Add JSON projection data
     if (separateFiles) {
-        exportData.forEach((p, i) => {
+        for (let i = 0; i < exportData.length; i++) {
+            const p = exportData[i];
             const safeTitle = p.title.replace(/[^a-z0-9]/gi, "_").toLowerCase();
             zipData[`projection-${i + 1}-${safeTitle}.json`] = strToU8(
                 stringifyProjectionData(p, minifiedMetadata),
             );
-        });
+        }
     } else {
         zipData["projections.json"] = strToU8(
             stringifyProjectionData(exportData, minifiedMetadata),
